@@ -1,6 +1,7 @@
 package com.plasticpanda.rainbow;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -9,11 +10,6 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import org.apache.http.Header;
-import org.apache.http.entity.StringEntity;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.UnsupportedEncodingException;
 
 
 public class RainbowHelper {
@@ -22,14 +18,18 @@ public class RainbowHelper {
 
     private String token;
     private String UUID;
-    private Context context;
     private static RainbowHelper sharedInstance;
+    private Context context;
 
     public RainbowHelper(Context context) {
         this.context = context;
-        this.UUID = Settings.Secure.getString(this.context.getContentResolver(), Settings.Secure.ANDROID_ID);
-
-        this.performLogin("ciao", "ciao");
+        if (this.context != null) {
+            this.UUID = Settings.Secure.getString(this.context.getContentResolver(), Settings.Secure.ANDROID_ID);
+            SharedPreferences shared = this.context.getSharedPreferences("rainbow", Context.MODE_PRIVATE);
+            this.token = shared.getString("token", null);
+        } else {
+            Log.e(TAG, "Context null");
+        }
     }
 
     public synchronized static RainbowHelper getInstance(Context context) {
@@ -39,15 +39,12 @@ public class RainbowHelper {
         return sharedInstance;
     }
 
-    public void performLogin(String username, String code) {
+    public void performLogin(String username, String code, final Command onSuccess) {
+
         AsyncHttpClient client = new AsyncHttpClient();
-
         RequestParams params = new RequestParams();
-        params.put("username", "luca");
-        params.put("token", "00000");
-        params.put("did", this.UUID);
 
-        client.post("http://fast.plasticpanda.com:23002/login", params, new AsyncHttpResponseHandler() {
+        AsyncHttpResponseHandler responseHandler = new AsyncHttpResponseHandler() {
             @Override
             public void onStart() {
                 // Initiated the request
@@ -56,9 +53,11 @@ public class RainbowHelper {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                // Successfully got a response
                 String s = new String(responseBody);
                 Log.d(TAG, s);
+                // Save token
+                token = null; // ...
+                onSuccess.execute();
             }
 
             @Override
@@ -84,10 +83,17 @@ public class RainbowHelper {
                 // Completed the request (either success or failure)
                 Log.d(TAG, "success");
             }
-        });
-    }
+        };
 
-    public String getUUID() {
-        return UUID;
+        if (username != null && code != null) {
+            params.put("username", username);
+            params.put("token", code);
+            params.put("did", this.UUID);
+
+            String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.login_url);
+            client.post(url, params, responseHandler);
+        } else {
+            Log.e(TAG, "Params error");
+        }
     }
 }
