@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@drawable/bk_login"
+              android:paddingRight="50dp"
+              android:paddingLeft="50dp"
+              android:textAlignment="center"
+              android:weightSum="1"
+              android:gravity="center_horizontal">
+
+    <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/imageView"
+            android:background="@drawable/logo"
+            android:src="@drawable/logo"
+            android:layout_marginTop="35dp"/>
+
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="319dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.35"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:layout_marginTop="45dp">
+
+        <EditText
+                android:layout_width="230dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/user"
+                android:layout_gravity="center"
+                android:hint="User"
+                android:textColorHint="#eaeaea"
+                android:textAlignment="gravity"
+                android:singleLine="true"
+                android:ellipsize="start"
+                android:gravity="center|center_horizontal"/>
+
+        <EditText
+                android:layout_width="230dp"
+                android:layout_height="wrap_content"
+                android:inputType="numberPassword"
+                android:id="@+id/code"
+                android:hint="Code"
+                android:textColor="#ffffff"
+                android:textColorHint="#eaeaea"
+                android:textAlignment="center"
+                android:singleLine="true"
+                android:editable="true"
+                android:layout_gravity="center"
+                android:ellipsize="start"
+                android:gravity="center|center_horizontal"
+                android:layout_marginTop="20dp"/>
+
+        <Button
+                android:layout_width="175dp"
+                android:layout_height="wrap_content"
+                android:text="Login"
+                android:id="@+id/login"
+                android:gravity="center|center_vertical"
+                android:layout_gravity="center"
+                android:ellipsize="start"
+                android:layout_marginTop="50dp"/>
+    </LinearLayout>
+
+</LinearLayout>
