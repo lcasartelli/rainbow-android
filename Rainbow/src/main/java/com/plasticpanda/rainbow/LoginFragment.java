@@ -25,7 +25,7 @@ public class LoginFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         Context context = getActivity();
         if (context != null) {
@@ -33,7 +33,7 @@ public class LoginFragment extends Fragment {
             Button btn = (Button) view.findViewById(R.id.login);
             btn.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onClick(View view) {
+                public void onClick(View clickView) {
                     TextView userTextView = (TextView) view.findViewById(R.id.user);
                     TextView codeTextView = (TextView) view.findViewById(R.id.code);
 
