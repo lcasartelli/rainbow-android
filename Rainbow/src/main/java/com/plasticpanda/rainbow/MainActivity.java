@@ -17,10 +17,11 @@ public class MainActivity extends Activity {
             getFragmentManager().beginTransaction()
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                 .add(R.id.container, new LoginFragment())
+                    // DEBUG
+                    //.add(R.id.container, new MainFragment())
                 .commit();
         }
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
