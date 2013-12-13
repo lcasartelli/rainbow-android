@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * @author Luca Casartelli
+ */
 
 // TODO scroll to bottom with keyboard up
 
@@ -24,8 +27,6 @@ public class MainFragment extends ListFragment {
     private static final String TAG = MainFragment.class.getName();
 
     private static MainFragment sharedInstance;
-    private ArrayList<Message> values;
-    private Activity activity;
 
     public MainFragment() {
     }
@@ -37,12 +38,14 @@ public class MainFragment extends ListFragment {
         return sharedInstance;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        this.values = new ArrayList<Message>();
-        this.activity = getActivity();
+        ArrayList<Message> values = new ArrayList<Message>();
+        Activity activity = getActivity();
 
+        //TODO: remove debug queue
         ArrayList<Message> queue = new ArrayList<Message>();
         queue.add(new Message("0", "Hermione", "Ciao Ron", new Date()));
         queue.add(new Message("0", "Hermione", "Come stai?", new Date()));
@@ -56,20 +59,21 @@ public class MainFragment extends ListFragment {
 
         for (int i = 0; i < queue.size(); ++i) {
             Log.d(TAG, queue.get(i).getMessage());
-            if (i > 0 && this.values.get(this.values.size() - 1).getAuthor().compareTo(queue.get(i).getAuthor()) == 0) {
-                Message last = this.values.get(this.values.size() - 1);
+            if ((i > 0) &&
+                (values.get(values.size() - 1).getAuthor().compareTo(queue.get(i).getAuthor()) == 0)) {
+                Message last = values.get(values.size() - 1);
                 String message = last.getMessage() + "\n" + queue.get(i).getMessage();
                 last.setMessage(message);
             } else {
-                this.values.add(queue.get(i));
+                values.add(queue.get(i));
             }
         }
 
-        Log.d(TAG, this.values.toString());
+        Log.d(TAG, values.toString());
 
 
-        if (this.activity != null) {
-            BaseAdapter mAdapter = new ChatAdapter(this.activity, R.layout.list_item, values);
+        if (activity != null) {
+            BaseAdapter mAdapter = new ChatAdapter(activity, R.layout.list_item, values);
             setListAdapter(mAdapter);
         }
         return rootView;
@@ -110,19 +114,22 @@ public class MainFragment extends ListFragment {
             if (convertView == null) {
                 convertView = mInflater.inflate(cellID, null);
             }
-            TextView author = (TextView) convertView.findViewById(R.id.author);
-            TextView message = (TextView) convertView.findViewById(R.id.message);
-            TextView message_time = (TextView) convertView.findViewById(R.id.message_time);
 
-            Log.d(TAG, "" + position);
+            if ((convertView != null) &&
+                (convertView.findViewById(R.id.author) != null) &&
+                (convertView.findViewById(R.id.message) != null) &&
+                (convertView.findViewById(R.id.message_time) != null)) {
 
-            Message msg = this.list.get(position);
-
-            author.setText(msg.getAuthor());
-            message.setText(msg.getMessage());
-            SimpleDateFormat format = new SimpleDateFormat("HH:mm");
-            String date = format.format(msg.getDate());
-            message_time.setText(date);
+                TextView authorView = (TextView) convertView.findViewById(R.id.author);
+                TextView messageView = (TextView) convertView.findViewById(R.id.message);
+                TextView messageTimeView = (TextView) convertView.findViewById(R.id.message_time);
+                Message message = this.list.get(position);
+                authorView.setText(message.getAuthor());
+                messageView.setText(message.getMessage());
+                SimpleDateFormat format = new SimpleDateFormat("HH:mm");
+                String date = format.format(message.getDate());
+                messageTimeView.setText(date);
+            }
 
             return convertView;
         }

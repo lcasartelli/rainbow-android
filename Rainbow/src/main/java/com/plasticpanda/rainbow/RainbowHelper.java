@@ -13,6 +13,9 @@ import org.apache.http.Header;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * @author Luca Casartelli
+ */
 
 public class RainbowHelper {
 
@@ -23,6 +26,9 @@ public class RainbowHelper {
     private static RainbowHelper sharedInstance;
     private Context context;
 
+    /**
+     * @param context application context
+     */
     public RainbowHelper(Context context) {
         this.context = context;
         if (this.context != null) {
@@ -34,6 +40,11 @@ public class RainbowHelper {
         }
     }
 
+    /** Singleton pattern
+     *
+     * @param context application context
+     * @return instance
+     */
     public synchronized static RainbowHelper getInstance(Context context) {
         if (sharedInstance == null) {
             sharedInstance = new RainbowHelper(context);
@@ -41,6 +52,13 @@ public class RainbowHelper {
         return sharedInstance;
     }
 
+    /**
+     *
+     * @param username username
+     * @param code Authy code
+     * @param onSuccess onSuccess function
+     * @param onError onError function
+     */
     public void performLogin(String username, String code, final Command onSuccess, final Command onError) {
 
         AsyncHttpClient client = new AsyncHttpClient();
@@ -112,6 +130,11 @@ public class RainbowHelper {
         }
     }
 
+    /**
+     *
+     * @param onSuccess onSuccess function
+     * @param onError onError function
+     */
     public void getMessages(final Command onSuccess, final Command onError) {
 
         AsyncHttpClient client = new AsyncHttpClient();

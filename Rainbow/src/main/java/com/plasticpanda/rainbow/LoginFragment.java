@@ -13,6 +13,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.TextView;
 
+/**
+ * @author Luca Casartelli
+ */
+
 public class LoginFragment extends Fragment {
 
     private static final String TAG = LoginFragment.class.getName();
@@ -54,13 +58,19 @@ public class LoginFragment extends Fragment {
                     keyboard.hideSoftInputFromWindow(codeTextView.getWindowToken(), 0);
 
 
-                    if (userTextView != null && userTextView.getText() != null && codeTextView != null && codeTextView.getText() != null) {
-                        dbHelper.performLogin(userTextView.getText().toString(), codeTextView.getText().toString(),
+                    if (userTextView != null &&
+                        userTextView.getText() != null &&
+                        codeTextView != null &&
+                        codeTextView.getText() != null) {
+                        dbHelper.performLogin(
+                            userTextView.getText().toString(),
+                            codeTextView.getText().toString(),
                             new Command() {
                                 @Override
                                 public void execute() {
                                     if (getFragmentManager() != null) {
-                                        getFragmentManager().beginTransaction()
+                                        getFragmentManager()
+                                            .beginTransaction()
                                             .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                                             .replace(R.id.container, MainFragment.getInstance())
                                                 //.addToBackStack(null)

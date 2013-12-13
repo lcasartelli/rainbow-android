@@ -9,6 +9,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 
+/**
+ * @author Luca Casartelli
+ */
+
 public class MainActivity extends Activity {
 
     private static final String TAG = MainActivity.class.getName();
@@ -28,7 +32,8 @@ public class MainActivity extends Activity {
         }
 
         if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
+            getFragmentManager()
+                .beginTransaction()
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                 .add(R.id.container, fragment)
                     // DEBUG
