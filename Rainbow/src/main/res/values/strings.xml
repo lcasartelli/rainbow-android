@@ -2,9 +2,8 @@
 <resources>
 
     <string name="app_name">Rainbow</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
-    <string name="rainbow_base_url">http://fast.plasticpanda.com:23002/</string>
-    <string name="login_url">login</string>
+    <string name="rainbow_base_url">http://fast.plasticpanda.com:23002</string>
+    <string name="login_url">/login</string>
+    <string name="messages_url">/chat</string>
 
 </resources>

@@ -1,24 +1,38 @@
 package com.plasticpanda.rainbow;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 
 public class MainActivity extends Activity {
+
+    private static final String TAG = MainActivity.class.getName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        SharedPreferences sharedPreferences = getSharedPreferences("rainbow", Context.MODE_PRIVATE);
+        String token = sharedPreferences.getString("token", null);
+        Fragment fragment;
+        if (token != null) {
+            Log.d(TAG, token);
+            fragment = MainFragment.getInstance();
+        } else {
+            fragment = LoginFragment.getInstance();
+        }
 
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-                .add(R.id.container, new LoginFragment())
+                .add(R.id.container, fragment)
                     // DEBUG
-                    //.add(R.id.container, new MainFragment())
+                    //.add(R.id.container, MainFragment.getInstance())
                 .commit();
         }
     }
@@ -27,11 +41,5 @@ public class MainActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        return id == R.id.action_settings || super.onOptionsItemSelected(item);
     }
 }
