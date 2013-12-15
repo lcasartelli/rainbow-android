@@ -4,7 +4,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:padding="5dip"
-                android:background="#99ffffff">
+                android:background="#32000000">
 
     <!--  ListRow Left sied Thumbnail image -->
     <LinearLayout
@@ -42,7 +42,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/author"
-            android:textColor="#343434"
+            android:textColor="#ffffff"
             android:layout_marginTop="5dip"
             android:layout_toRightOf="@+id/author_image"
             android:layout_marginRight="5dp"

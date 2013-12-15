@@ -1,9 +1,16 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:tools="http://schemas.android.com/tools"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                tools:context="com.plasticpanda.rainbow.MainActivity$PlaceholderFragment"
-                android:background="@drawable/bk">
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                tools:context="com.plasticpanda.rainbow.MainActivity$PlaceholderFragment">
+
+    <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:src="@drawable/bk"
+            android:adjustViewBounds="false"
+            android:cropToPadding="false"
+            android:scaleType="centerCrop"/>
 
     <ListView
             android:layout_width="wrap_content"
@@ -16,7 +23,8 @@
             android:choiceMode="none"
             android:stackFromBottom="true"
             android:transcriptMode="normal"
-            android:dividerHeight="3dp"/>
+            android:dividerHeight="3dp"
+            android:drawSelectorOnTop="false"/>
 
 
     <LinearLayout
@@ -28,11 +36,10 @@
             android:gravity="center|left"
             android:paddingLeft="10dp"
             android:background="#eaeaea"
-            android:baselineAligned="false"
-            android:layout_alignWithParentIfMissing="true"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true">
+            android:layout_centerHorizontal="true"
+            >
 
         <ImageView
                 android:layout_width="35dp"
@@ -53,7 +60,10 @@
                 android:layout_centerVertical="true"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true"
-                android:layout_weight="0.67"/>
+                android:layout_weight="0.67"
+                android:textColor="#000000"
+                android:singleLine="true"
+                android:layout_gravity="center"/>
 
     </LinearLayout>
 
