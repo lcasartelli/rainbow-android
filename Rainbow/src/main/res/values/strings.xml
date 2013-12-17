@@ -2,8 +2,16 @@
 <resources>
 
     <string name="app_name">Rainbow</string>
-    <string name="rainbow_base_url">http://fast.plasticpanda.com:23002</string>
+    <string name="rainbow_base_url">http://plasticpanda.getrainbow.com/</string>
     <string name="login_url">/login</string>
     <string name="messages_url">/chat</string>
+    <string name="user_label">User</string>
+    <string name="code_label">Code</string>
+    <string name="login_button_label">Login</string>
+    <string name="background_image_description"></string>
+    <string name="avatar_image_description"></string>
+    <string name="logo_image_description"></string>
+    <string name="attachment_image_description"></string>
+    <string name="message_hint">Hello Aurora…</string>
 
 </resources>

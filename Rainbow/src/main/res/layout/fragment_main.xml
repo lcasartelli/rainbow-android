@@ -7,6 +7,7 @@
     <ImageView
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
+            android:contentDescription="@string/background_image_description"
             android:src="@drawable/bk"
             android:adjustViewBounds="false"
             android:cropToPadding="false"
@@ -44,6 +45,7 @@
         <ImageView
                 android:layout_width="35dp"
                 android:layout_height="35dp"
+                android:contentDescription="@string/attachment_image_description"
                 android:id="@+id/imageView"
                 android:src="@drawable/attachment"/>
 
@@ -56,9 +58,8 @@
                 android:layout_width="251dp"
                 android:layout_height="32dp"
                 android:id="@+id/editText"
+                android:hint="@string/message_hint"
                 android:background="#ffffff"
-                android:layout_centerVertical="true"
-                android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true"
                 android:layout_weight="0.67"
                 android:textColor="#000000"

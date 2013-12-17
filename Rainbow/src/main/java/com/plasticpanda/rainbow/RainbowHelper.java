@@ -39,7 +39,7 @@ public class RainbowHelper {
     /**
      * @param context application context
      */
-    public RainbowHelper(Context context) {
+    private RainbowHelper(Context context) {
         this.context = context;
         if (this.context != null) {
             this.UUID = Settings.Secure.getString(this.context.getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -51,7 +51,8 @@ public class RainbowHelper {
         }
     }
 
-    /** Singleton pattern
+    /**
+     * Singleton pattern
      *
      * @param context application context
      * @return instance
@@ -78,13 +79,11 @@ public class RainbowHelper {
     }
 
     /**
-     *
-     * @param username username
-     * @param code Authy code
-     * @param onSuccess onSuccess function
-     * @param onError onError function
+     * @param username      username
+     * @param code          Authy code
+     * @param loginListener login listener
      */
-    public void performLogin(String username, String code, final Command onSuccess, final Command onError) {
+    public void performLogin(String username, String code, final LoginListener loginListener) {
 
         AsyncHttpClient client = new AsyncHttpClient();
         client.addHeader("Accept", "application/json");
@@ -102,13 +101,13 @@ public class RainbowHelper {
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 String s = new String(responseBody);
                 Log.d(TAG, s);
-                if (onSuccess != null) {
+                if (loginListener != null) {
                     try {
                         JSONObject resp = new JSONObject(s);
                         String serverToken = resp.getString("token");
                         saveToken(serverToken);
                         saveUser(user);
-                        onSuccess.execute(null);
+                        loginListener.onSuccess();
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -117,11 +116,8 @@ public class RainbowHelper {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                // Response failed
-                String s = new String(responseBody);
-                Log.e(TAG, s);
-                if (onError != null) {
-                    onError.execute(null);
+                if (loginListener != null) {
+                    loginListener.onError();
                 }
             }
 
@@ -157,12 +153,7 @@ public class RainbowHelper {
         }
     }
 
-    /**
-     *
-     * @param onSuccess onSuccess function
-     * @param onError onError function
-     */
-    public void getMessages(final Command onSuccess, final Command onError) {
+    public void getMessages(final MessagesListener messagesListener) {
 
         AsyncHttpClient client = new AsyncHttpClient();
         client.addHeader("Accept", "application/json");
@@ -185,8 +176,8 @@ public class RainbowHelper {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                if (onSuccess != null) {
-                    onSuccess.execute(messages);
+                if (messagesListener != null) {
+                    messagesListener.onSuccess(messages);
                 }
             }
 
@@ -194,8 +185,8 @@ public class RainbowHelper {
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                 // Response failed
                 Log.e(TAG, "" + statusCode);
-                if (onError != null) {
-                    onError.execute(null);
+                if (messagesListener != null) {
+                    messagesListener.onError();
                 }
             }
 

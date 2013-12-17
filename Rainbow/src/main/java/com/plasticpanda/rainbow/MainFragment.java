@@ -31,10 +31,9 @@ public class MainFragment extends ListFragment {
     private static MainFragment sharedInstance;
 
     private ChatAdapter mAdapter;
-    private List<Message> messages;
+    private final List<Message> messages = new ArrayList<Message>();
 
-    public MainFragment() {
-        this.messages = new ArrayList<Message>();
+    private MainFragment() {
     }
 
     public static synchronized MainFragment getInstance() {
@@ -51,18 +50,22 @@ public class MainFragment extends ListFragment {
         Activity activity = getActivity();
 
         if (activity != null) {
-            this.mAdapter = new ChatAdapter(activity, R.layout.list_item, messages);
+            this.mAdapter = new ChatAdapter(activity, messages);
             setListAdapter(this.mAdapter);
         }
 
         RainbowHelper db = RainbowHelper.getInstance(this.getActivity());
-        db.getMessages(new Command() {
+        db.getMessages(new MessagesListener() {
             @Override
-            public void execute(List<Message> messages) {
+            public void onSuccess(List<Message> messages) {
                 List<Message> compressed = RainbowHelper.compressMessages(messages);
                 refreshAdapter(compressed);
             }
-        }, null);
+
+            @Override
+            public void onError() {
+            }
+        });
 
         EditText messageView;
         if (rootView != null) {
@@ -82,9 +85,13 @@ public class MainFragment extends ListFragment {
     }
 
     private void sendMessage() {
-        EditText messageView = (EditText) getActivity().findViewById(R.id.editText);
-        String message = messageView.getText().toString();
-        // TODO: send message
+        Activity activity = getActivity();
+        if (activity != null && activity.findViewById(R.id.editText) != null) {
+            EditText messageView = (EditText) activity.findViewById(R.id.editText);
+            if (messageView.getText() != null) {
+                String message = messageView.getText().toString();
+            }
+        }
     }
 
     public synchronized void refreshAdapter(List<Message> messages) {
@@ -99,10 +106,9 @@ public class MainFragment extends ListFragment {
 
         private LayoutInflater mInflater;
         private List<Message> list;
-        private int cellID;
+        private static final int cellID = R.layout.list_item;
 
-        public ChatAdapter(Context context, int resource, List<Message> list) {
-            this.cellID = resource;
+        public ChatAdapter(Context context, List<Message> list) {
             mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             this.list = list;
         }

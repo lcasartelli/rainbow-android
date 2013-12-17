@@ -19,6 +19,7 @@
                 android:id="@+id/list_image"
                 android:layout_width="50dip"
                 android:layout_height="50dip"
+                android:contentDescription="@string/avatar_image_description"
                 android:src="@drawable/avatar"/>
 
     </LinearLayout>
@@ -30,7 +31,6 @@
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/author_image"
             android:layout_toRightOf="@+id/author_image"
-            android:text="HERMIONE GRANGER"
             android:textColor="#ffffff"
             android:typeface="sans"
             android:textStyle="bold"
@@ -46,7 +46,6 @@
             android:layout_marginTop="5dip"
             android:layout_toRightOf="@+id/author_image"
             android:layout_marginRight="5dp"
-            android:text="I hope you’re pleased with yourselves. We could all have been killed — or worse, expelled. "
             android:textSize="14dp"/>
 
     <!-- Rightend Duration -->
@@ -57,7 +56,6 @@
             android:layout_alignParentRight="true"
             android:layout_alignTop="@id/author"
             android:gravity="right"
-            android:text="9:45"
             android:layout_marginRight="5dip"
             android:textSize="11dip"
             android:textColor="#ffffff"

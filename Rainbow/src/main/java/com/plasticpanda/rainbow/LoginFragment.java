@@ -12,8 +12,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.TextView;
-
-import java.util.List;
+import android.widget.Toast;
 
 /**
  * @author Luca Casartelli
@@ -24,7 +23,7 @@ public class LoginFragment extends Fragment {
     private static final String TAG = LoginFragment.class.getName();
     private static LoginFragment sharedInstance;
 
-    public LoginFragment() {
+    private LoginFragment() {
 
     }
 
@@ -67,9 +66,9 @@ public class LoginFragment extends Fragment {
                         dbHelper.performLogin(
                             userTextView.getText().toString(),
                             codeTextView.getText().toString(),
-                            new Command() {
+                            new LoginListener() {
                                 @Override
-                                public void execute(List<Message> a) {
+                                public void onSuccess() {
                                     if (getFragmentManager() != null) {
                                         getFragmentManager()
                                             .beginTransaction()
@@ -79,7 +78,17 @@ public class LoginFragment extends Fragment {
                                             .commit();
                                     }
                                 }
-                            }, null);
+
+                                @Override
+                                public void onError() {
+                                    Log.d(TAG, "Login error");
+                                    Toast.makeText(
+                                        context,
+                                        "Sorry, please check your credentials",
+                                        Toast.LENGTH_LONG)
+                                        .show();
+                                }
+                            });
                     } else {
                         Log.e(TAG, "Error with login input");
                     }
