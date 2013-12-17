@@ -5,10 +5,13 @@ import android.app.ListFragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -61,8 +64,27 @@ public class MainFragment extends ListFragment {
             }
         }, null);
 
+        EditText messageView;
+        if (rootView != null) {
+            messageView = (EditText) rootView.findViewById(R.id.editText);
+            messageView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                @Override
+                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                    if (i == EditorInfo.IME_ACTION_SEND) {
+                        sendMessage();
+                    }
+                    return false;
+                }
+            });
+        }
 
         return rootView;
+    }
+
+    private void sendMessage() {
+        EditText messageView = (EditText) getActivity().findViewById(R.id.editText);
+        String message = messageView.getText().toString();
+        // TODO: send message
     }
 
     public synchronized void refreshAdapter(List<Message> messages) {

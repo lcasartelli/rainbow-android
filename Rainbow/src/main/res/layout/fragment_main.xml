@@ -63,6 +63,9 @@
                 android:layout_weight="0.67"
                 android:textColor="#000000"
                 android:singleLine="true"
+                android:capitalize="sentences"
+                android:textCursorDrawable="@null"
+                android:imeOptions="actionSend"
                 android:layout_gravity="center"/>
 
     </LinearLayout>
