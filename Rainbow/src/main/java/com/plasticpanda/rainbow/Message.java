@@ -1,5 +1,7 @@
 package com.plasticpanda.rainbow;
 
+import android.util.Log;
+
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -11,6 +13,8 @@ import java.util.Date;
 
 @DatabaseTable(tableName = "messages")
 public class Message {
+
+    private static final String TAG = Message.class.getName();
 
     @DatabaseField(canBeNull = false)
     private String messageID;
@@ -24,12 +28,6 @@ public class Message {
     private boolean isEncrypted;
     private boolean sending;
 
-
-    public Message() {
-        this.author = "";
-        this.message = "";
-    }
-
     /**
      * @param messageID   message id
      * @param author      message author
@@ -42,17 +40,7 @@ public class Message {
         this.author = author;
         this.message = message;
         this.date = date;
-        this.isEncrypted = this.isEncrypted();
-    }
-
-    /**
-     * @param messageID message id
-     * @param author    message author
-     * @param message   message body
-     * @param date      message time
-     */
-    public Message(String messageID, String author, String message, Date date) {
-        this(messageID, author, message, date, true);
+        this.isEncrypted = isEncrypted;
     }
 
     public String getMessageID() {
@@ -79,6 +67,17 @@ public class Message {
         return message;
     }
 
+    public String getClearMessage() {
+        String msg;
+        try {
+            msg = SecurityUtils.decrypt(this.message);
+        } catch (Exception e) {
+            msg = this.message;
+            Log.e(TAG, "Decryption error: " + this.toString());
+        }
+        return msg;
+    }
+
     public void setMessage(String message) {
         this.message = message;
     }
@@ -95,15 +94,14 @@ public class Message {
         return isEncrypted;
     }
 
-    public void setEncrypted(boolean isEncrypted) {
-        this.isEncrypted = isEncrypted;
-    }
-
     @Override
     public String toString() {
         return "Message{" +
-            "author='" + author + '\'' +
+            "messageID='" + messageID + '\'' +
+            ", author='" + author + '\'' +
+            ", date=" + date +
             ", message='" + message + '\'' +
+            ", isEncrypted=" + isEncrypted +
             '}';
     }
 }

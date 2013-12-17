@@ -10,21 +10,31 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import org.apache.http.Header;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Luca Casartelli
  */
 
+
 public class RainbowHelper {
 
     private static final String TAG = RainbowHelper.class.getName();
 
-    private String token;
-    private String UUID;
-    private static RainbowHelper sharedInstance;
     private Context context;
+    private SharedPreferences sharedPreferences;
+    private String token;
+    private String user;
+    private String UUID;
+
+    private static RainbowHelper sharedInstance;
 
     /**
      * @param context application context
@@ -33,8 +43,9 @@ public class RainbowHelper {
         this.context = context;
         if (this.context != null) {
             this.UUID = Settings.Secure.getString(this.context.getContentResolver(), Settings.Secure.ANDROID_ID);
-            SharedPreferences shared = this.context.getSharedPreferences("rainbow", Context.MODE_PRIVATE);
-            this.token = shared.getString("token", null);
+            this.sharedPreferences = this.context.getSharedPreferences("rainbow", Context.MODE_PRIVATE);
+            this.token = this.sharedPreferences.getString("token", null);
+            this.user = this.sharedPreferences.getString("user", null);
         } else {
             Log.e(TAG, "Context null");
         }
@@ -52,6 +63,20 @@ public class RainbowHelper {
         return sharedInstance;
     }
 
+    private void saveToken(String t) {
+        this.sharedPreferences.edit()
+            .putString("token", t)
+            .commit();
+        this.token = t;
+    }
+
+    private void saveUser(String u) {
+        this.sharedPreferences.edit()
+            .putString("user", u)
+            .commit();
+        this.user = u;
+    }
+
     /**
      *
      * @param username username
@@ -62,7 +87,9 @@ public class RainbowHelper {
     public void performLogin(String username, String code, final Command onSuccess, final Command onError) {
 
         AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader("Accept", "application/json");
         RequestParams params = new RequestParams();
+
 
         AsyncHttpResponseHandler responseHandler = new AsyncHttpResponseHandler() {
             @Override
@@ -79,11 +106,9 @@ public class RainbowHelper {
                     try {
                         JSONObject resp = new JSONObject(s);
                         String serverToken = resp.getString("token");
-                        SharedPreferences sharedPreferences = context.getSharedPreferences("rainbow", Context.MODE_PRIVATE);
-                        sharedPreferences.edit()
-                            .putString("token", serverToken)
-                            .commit();
-                        onSuccess.execute();
+                        saveToken(serverToken);
+                        saveUser(user);
+                        onSuccess.execute(null);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -92,11 +117,11 @@ public class RainbowHelper {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                // Response failed :(
+                // Response failed
                 String s = new String(responseBody);
                 Log.e(TAG, s);
                 if (onError != null) {
-                    onError.execute();
+                    onError.execute(null);
                 }
             }
 
@@ -119,9 +144,11 @@ public class RainbowHelper {
         };
 
         if (username != null && code != null) {
+
             params.put("username", username);
             params.put("token", code);
             params.put("did", this.UUID);
+            this.user = username;
 
             String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.login_url);
             client.post(url, params, responseHandler);
@@ -138,6 +165,7 @@ public class RainbowHelper {
     public void getMessages(final Command onSuccess, final Command onError) {
 
         AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader("Accept", "application/json");
         RequestParams params = new RequestParams();
 
         AsyncHttpResponseHandler responseHandler = new AsyncHttpResponseHandler() {
@@ -150,21 +178,24 @@ public class RainbowHelper {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 String s = new String(responseBody);
-                Log.d(TAG, s);
-                // Save token
-                token = null; // ...
+                List<Message> messages = null;
+                try {
+                    JSONObject resp = new JSONObject(s);
+                    messages = RainbowHelper.parseMessages(resp);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 if (onSuccess != null) {
-                    onSuccess.execute();
+                    onSuccess.execute(messages);
                 }
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                // Response failed :(
-                String s = new String(responseBody);
-                Log.e(TAG, s);
+                // Response failed
+                Log.e(TAG, "" + statusCode);
                 if (onError != null) {
-                    onError.execute();
+                    onError.execute(null);
                 }
             }
 
@@ -186,14 +217,74 @@ public class RainbowHelper {
             }
         };
 
-        // TODO get messages
-        if (true) {
-            params.put("token", this.token);
+        String limit = "500";
+        params.put("token", this.token);
+        params.put("since", "0");
+        params.put("from", this.user);
+        params.put("did", "" + this.UUID);
+        params.put("limit", limit);
 
-            String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.messages_url);
-            client.post(url, params, responseHandler);
-        } else {
-            Log.e(TAG, "Params error");
+        String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.messages_url);
+        client.get(url, params, responseHandler);
+    }
+
+    /**
+     * @param queue message
+     * @return compressed list
+     */
+    public static List<Message> compressMessages(List<Message> queue) {
+        List<Message> data = new ArrayList<Message>();
+        for (int i = 0; i < queue.size(); ++i) {
+            if ((i > 0) &&
+                (data.get(data.size() - 1).getAuthor().compareTo(queue.get(i).getAuthor()) == 0)) {
+                Message last = data.get(data.size() - 1);
+                String message;
+                if (last.isEncrypted()) {
+                    message = last.getClearMessage() + "\n" + queue.get(i).getClearMessage();
+                } else {
+                    message = last.getMessage() + "\n" + queue.get(i).getMessage();
+                }
+
+                last.setMessage(message);
+            } else {
+                Message first = queue.get(i);
+                if (first.isEncrypted()) {
+                    first.setMessage(first.getClearMessage());
+                } else {
+                    first.setMessage(first.getMessage());
+                }
+                data.add(first);
+            }
         }
+        return data;
+    }
+
+    /**
+     * @param data JSON data
+     * @return messages
+     */
+    private static List<Message> parseMessages(JSONObject data) {
+        List<Message> messages = new ArrayList<Message>();
+        // Parse messages
+        try {
+            JSONArray jsonMessages = data.getJSONArray("messages");
+
+            for (int i = 0; i < jsonMessages.length(); ++i) {
+                JSONObject msg = jsonMessages.getJSONObject(i);
+                String _id = msg.getString("_id");
+                String from = msg.getString("from");
+                boolean enc = msg.getBoolean("enc");
+                String message = msg.getString("message");
+                long timestamp = msg.getLong("timestamp");
+                Date date = new Date(timestamp);
+                messages.add(new Message(_id, from, message, date, enc));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        // Order by timestamp
+        Collections.reverse(messages);
+        return messages;
     }
 }

@@ -13,7 +13,6 @@ import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -28,7 +27,11 @@ public class MainFragment extends ListFragment {
 
     private static MainFragment sharedInstance;
 
+    private ChatAdapter mAdapter;
+    private List<Message> messages;
+
     public MainFragment() {
+        this.messages = new ArrayList<Message>();
     }
 
     public static synchronized MainFragment getInstance() {
@@ -42,42 +45,33 @@ public class MainFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        ArrayList<Message> values = new ArrayList<Message>();
         Activity activity = getActivity();
 
-        //TODO: remove debug queue
-        ArrayList<Message> queue = new ArrayList<Message>();
-        queue.add(new Message("0", "Hermione", "Ciao Ron", new Date()));
-        queue.add(new Message("0", "Hermione", "Come stai?", new Date()));
-        queue.add(new Message("0", "Ron", "Ciao Hermione!", new Date()));
-        queue.add(new Message("0", "Ron", "Bene, tu?", new Date()));
-        queue.add(new Message("0", "Hermione", "Tutto bene", new Date()));
-        queue.add(new Message("0", "Hermione", "Grazie!", new Date()));
-        queue.add(new Message("0", "Hermione", ":)", new Date()));
-        queue.add(new Message("0", "Ron", ":)", new Date()));
-
-
-        for (int i = 0; i < queue.size(); ++i) {
-            Log.d(TAG, queue.get(i).getMessage());
-            if ((i > 0) &&
-                (values.get(values.size() - 1).getAuthor().compareTo(queue.get(i).getAuthor()) == 0)) {
-                Message last = values.get(values.size() - 1);
-                String message = last.getMessage() + "\n" + queue.get(i).getMessage();
-                last.setMessage(message);
-            } else {
-                values.add(queue.get(i));
-            }
-        }
-
-        Log.d(TAG, values.toString());
-
-
         if (activity != null) {
-            BaseAdapter mAdapter = new ChatAdapter(activity, R.layout.list_item, values);
-            setListAdapter(mAdapter);
+            this.mAdapter = new ChatAdapter(activity, R.layout.list_item, messages);
+            setListAdapter(this.mAdapter);
         }
+
+        RainbowHelper db = RainbowHelper.getInstance(this.getActivity());
+        db.getMessages(new Command() {
+            @Override
+            public void execute(List<Message> messages) {
+                List<Message> compressed = RainbowHelper.compressMessages(messages);
+                refreshAdapter(compressed);
+            }
+        }, null);
+
+
         return rootView;
     }
+
+    public synchronized void refreshAdapter(List<Message> messages) {
+        this.messages.clear();
+        this.messages.addAll(RainbowHelper.compressMessages(messages));
+        Log.d(TAG, this.messages.toString());
+        mAdapter.notifyDataSetChanged();
+    }
+
 
     class ChatAdapter extends BaseAdapter {
 
