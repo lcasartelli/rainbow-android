@@ -85,8 +85,19 @@
     <orderEntry type="jdk" jdkName="Android API 19 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="android-async-http-1.4.4" level="project" />
+    <orderEntry type="library" exported="" name="ormlite-android-4.47" level="project" />
     <orderEntry type="library" exported="" name="support-v4-19.0.0" level="project" />
+    <orderEntry type="library" exported="" name="scprov-jdk15on-1.47.0.2" level="project" />
+    <orderEntry type="library" exported="" name="sc-bzip2-1.47.0.2" level="project" />
+    <orderEntry type="library" exported="" name="scmail-jdk15on-1.47.0.2" level="project" />
+    <orderEntry type="library" exported="" name="commons-io-2.4" level="project" />
+    <orderEntry type="library" exported="" name="ormlite-jdbc-4.47" level="project" />
+    <orderEntry type="library" exported="" name="scpkix-jdk15on-1.47.0.2" level="project" />
+    <orderEntry type="library" exported="" name="ormlite-core-4.47" level="project" />
+    <orderEntry type="library" exported="" name="scpg-jdk15on-1.47.0.2" level="project" />
     <orderEntry type="library" exported="" name="support-v13-19.0.0" level="project" />
+    <orderEntry type="library" exported="" name="sc-light-jdk15on-1.47.0.2" level="project" />
+    <orderEntry type="library" exported="" name="commons-lang3-3.1" level="project" />
   </component>
 </module>
 

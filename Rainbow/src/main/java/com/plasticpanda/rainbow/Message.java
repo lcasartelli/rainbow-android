@@ -1,17 +1,26 @@
 package com.plasticpanda.rainbow;
 
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+
 import java.util.Date;
 
 /**
  * @author Luca Casartelli
  */
 
+@DatabaseTable(tableName = "messages")
 public class Message {
 
+    @DatabaseField(canBeNull = false)
     private String messageID;
+    @DatabaseField(canBeNull = false)
     private String author;
+    @DatabaseField(canBeNull = false)
     private Date date;
+    @DatabaseField(canBeNull = false)
     private String message;
+
     private boolean isEncrypted;
     private boolean sending;
 
