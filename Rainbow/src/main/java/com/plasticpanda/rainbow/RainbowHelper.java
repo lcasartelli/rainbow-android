@@ -3,6 +3,7 @@ package com.plasticpanda.rainbow;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -70,7 +71,8 @@ public class RainbowHelper {
 
     }
 
-    /** Singleton pattern
+    /**
+     * Singleton pattern
      *
      * @param context application context
      * @return instance
@@ -128,21 +130,28 @@ public class RainbowHelper {
                 @Override
                 public void successCallback(String channel, final Object data) {
 
-                    context.runOnUiThread(new Runnable() {
+                    new AsyncTask<String, Integer, String>() {
                         @Override
-                        public void run() {
-                            try {
-                                JSONObject obj = new JSONObject(data.toString());
-                                Message msg = getMessage(obj);
-                                dao.create(msg);
-                                MainFragment.getInstance().refreshAdapter();
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            } catch (SQLException e) {
-                                e.printStackTrace();
+                        protected String doInBackground(String... jsonObjects) {
+                            for (String jsonObject : jsonObjects) {
+                                try {
+                                    JSONObject obj = new JSONObject(jsonObject);
+                                    if (obj.getString("from").compareTo(user) != 0) {
+                                        Message msg = getMessage(obj);
+                                        dao.create(msg);
+                                        MainFragment.getInstance().refreshAdapter();
+                                    } else {
+                                        Log.d(TAG, "Message from current user");
+                                    }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                } catch (SQLException e) {
+                                    e.printStackTrace();
+                                }
                             }
+                            return null;
                         }
-                    });
+                    }.execute(data.toString());
                 }
 
                 @Override
@@ -158,9 +167,8 @@ public class RainbowHelper {
     }
 
     /**
-     *
-     * @param username username
-     * @param code Authy code
+     * @param username      username
+     * @param code          Authy code
      * @param loginListener login listener
      */
     public void performLogin(String username, String code, final SimpleListener loginListener) {
@@ -272,7 +280,6 @@ public class RainbowHelper {
 
             @Override
             public void onRetry() {
-                // Request was retried;
                 Log.d(TAG, "retry");
             }
 
@@ -453,16 +460,17 @@ public class RainbowHelper {
         final Message msg = new Message(messageID, this.user, cryptedMessage, new Date(), true, true);
 
         // Storing message
-        context.runOnUiThread(new Runnable() {
+        new AsyncTask<Message, Integer, String>() {
             @Override
-            public void run() {
+            protected String doInBackground(Message... messages) {
                 try {
                     DatabaseHelper.getInstance(context).getDao().create(msg);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
+                return null;
             }
-        });
+        }.execute(msg);
 
         params.put("token", this.token);
         params.put("from", msg.getAuthor());

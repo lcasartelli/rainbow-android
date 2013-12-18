@@ -14,8 +14,6 @@ import android.view.Menu;
 
 public class MainActivity extends Activity {
 
-    private static final String TAG = MainActivity.class.getName();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

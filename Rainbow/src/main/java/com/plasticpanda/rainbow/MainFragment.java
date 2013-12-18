@@ -3,6 +3,7 @@ package com.plasticpanda.rainbow;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -106,29 +107,31 @@ public class MainFragment extends ListFragment {
                 final String message = messageView.getText().toString();
 
                 messageView.setText("".toCharArray(), 0, 0);
-
-                context.runOnUiThread(new Runnable() {
+                new AsyncTask<String, Integer, String>() {
                     @Override
-                    public void run() {
-                        RainbowHelper.getInstance(context).sendMessage(message, new SimpleListener() {
-                            @Override
-                            public void onSuccess() {
-                                refreshAdapter();
-                            }
+                    protected String doInBackground(String... messages) {
 
-                            @Override
-                            public void onError() {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.send_message_error),
-                                    Toast.LENGTH_LONG)
-                                    .show();
-                            }
-                        });
+                        for (String message1 : messages) {
+                            RainbowHelper.getInstance(context).sendMessage(message1, new SimpleListener() {
+                                @Override
+                                public void onSuccess() {
+                                    refreshAdapter();
+                                }
+
+                                @Override
+                                public void onError() {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.send_message_error),
+                                        Toast.LENGTH_LONG)
+                                        .show();
+                                }
+                            });
+                        }
+
+                        return null;
                     }
-                });
-
-
+                }.execute(message);
             }
         }
     }
@@ -158,21 +161,30 @@ public class MainFragment extends ListFragment {
     }
 
     public synchronized void refreshAdapter() {
-        this.context.runOnUiThread(new Runnable() {
+        new AsyncTask<String, Integer, String>() {
+
             @Override
-            public void run() {
+            protected String doInBackground(String... strings) {
                 try {
                     List<Message> data = RainbowHelper.getInstance(context).getMessageFromDb();
                     List<Message> compressed = RainbowHelper.compressMessages(data);
                     messages.clear();
                     messages.addAll(compressed);
                     Log.i(TAG, "refreshed");
-                    mAdapter.notifyDataSetChanged();
+                    context.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mAdapter.notifyDataSetChanged();
+                        }
+                    });
+
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
+
+                return null;
             }
-        });
+        }.execute();
     }
 
 
