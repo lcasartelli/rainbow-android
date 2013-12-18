@@ -66,7 +66,7 @@ public class LoginFragment extends Fragment {
                         dbHelper.performLogin(
                             userTextView.getText().toString(),
                             codeTextView.getText().toString(),
-                            new LoginListener() {
+                            new SimpleListener() {
                                 @Override
                                 public void onSuccess() {
                                     if (getFragmentManager() != null) {
@@ -84,7 +84,7 @@ public class LoginFragment extends Fragment {
                                     Log.d(TAG, "Login error");
                                     Toast.makeText(
                                         context,
-                                        "Sorry, please check your credentials",
+                                        context.getString(R.string.login_error),
                                         Toast.LENGTH_LONG)
                                         .show();
                                 }

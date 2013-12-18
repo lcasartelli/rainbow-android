@@ -320,7 +320,7 @@ public class OpenSSL {
     public static InputStream encrypt(String cipher, char[] pwd,
                                       InputStream data, boolean toBase64,
                                       boolean useSalt)
-        throws IOException, GeneralSecurityException {
+        throws GeneralSecurityException {
         CipherInfo cipherInfo = lookup(cipher);
         byte[] salt = null;
         if (useSalt) {
@@ -419,7 +419,7 @@ public class OpenSSL {
 
     public static InputStream encrypt(String cipher, byte[] key, byte[] iv,
                                       InputStream data, boolean toBase64)
-        throws IOException, GeneralSecurityException {
+        throws GeneralSecurityException {
         CipherInfo cipherInfo = lookup(cipher);
         int keySize = cipherInfo.keySize;
         int ivSize = cipherInfo.ivSize;

@@ -16,6 +16,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -51,8 +52,7 @@ public class RainbowHelper {
         }
     }
 
-    /**
-     * Singleton pattern
+    /** Singleton pattern
      *
      * @param context application context
      * @return instance
@@ -79,11 +79,12 @@ public class RainbowHelper {
     }
 
     /**
-     * @param username      username
-     * @param code          Authy code
+     *
+     * @param username username
+     * @param code Authy code
      * @param loginListener login listener
      */
-    public void performLogin(String username, String code, final LoginListener loginListener) {
+    public void performLogin(String username, String code, final SimpleListener loginListener) {
 
         AsyncHttpClient client = new AsyncHttpClient();
         client.addHeader("Accept", "application/json");
@@ -94,7 +95,7 @@ public class RainbowHelper {
             @Override
             public void onStart() {
                 // Initiated the request
-                Log.d(TAG, "Start");
+                Log.d(TAG, "Start login");
             }
 
             @Override
@@ -163,7 +164,7 @@ public class RainbowHelper {
             @Override
             public void onStart() {
                 // Initiated the request
-                Log.d(TAG, "Start");
+                Log.d(TAG, "Start getting messages");
             }
 
             @Override
@@ -274,8 +275,68 @@ public class RainbowHelper {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        // Order by timestamp
-        Collections.reverse(messages);
+        // Sort by timestamp
+        Comparator<Message> comparator = new Comparator<Message>() {
+            public int compare(Message c1, Message c2) {
+                return c1.getDate().compareTo(c2.getDate());
+            }
+        };
+
+        Collections.sort(messages, comparator);
+
         return messages;
+    }
+
+    public void sendMessage(String message, final SimpleListener messageListener) {
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader("Accept", "application/json");
+        RequestParams params = new RequestParams();
+
+        AsyncHttpResponseHandler responseHandler = new AsyncHttpResponseHandler() {
+            @Override
+            public void onStart() {
+                Log.d(TAG, "Start sending message...");
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                if (messageListener != null) {
+                    messageListener.onSuccess();
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                Log.e(TAG, "" + statusCode);
+                if (messageListener != null) {
+                    messageListener.onError();
+                }
+            }
+
+            @Override
+            public void onRetry() {
+                Log.d(TAG, "retry");
+            }
+
+            @Override
+            public void onProgress(int bytesWritten, int totalSize) {
+                // Progress notification
+            }
+
+            @Override
+            public void onFinish() {
+                Log.d(TAG, "End send message request");
+            }
+        };
+
+        params.put("token", this.token);
+        params.put("from", this.user);
+        params.put("did", "" + this.UUID);
+        params.put("timestamp", String.valueOf(new Date().getTime()));
+        params.put("message", SecurityUtils.encrypt(message));
+        params.put("enc", "1");
+
+        String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.messages_url);
+        client.post(url, params, responseHandler);
     }
 }

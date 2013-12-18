@@ -5,6 +5,7 @@ import android.util.Base64;
 import org.apache.commons.ssl.OpenSSL;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 
 
@@ -29,5 +30,21 @@ public class SecurityUtils {
             e.printStackTrace();
         }
         return decryptedText;
+    }
+
+    public static String encrypt(String text) {
+        String encrypted = null;
+        try {
+            byte[] encryptedData = OpenSSL.encrypt(AES_ALGORITHM, SECRET_KEY, text.getBytes("UTF8"), false);
+            encrypted = Base64.encodeToString(encryptedData, Base64.DEFAULT);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+
+        return encrypted;
     }
 }

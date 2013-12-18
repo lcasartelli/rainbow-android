@@ -1,17 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- App -->
     <string name="app_name">Rainbow</string>
-    <string name="rainbow_base_url">http://plasticpanda.getrainbow.com/</string>
+
+    <!-- URLs -->
+    <string name="rainbow_base_url">http://fast.plasticpanda.com:23002</string>
     <string name="login_url">/login</string>
     <string name="messages_url">/chat</string>
+
+    <!-- Labels -->
     <string name="user_label">User</string>
     <string name="code_label">Code</string>
+    <string name="message_label">Send a message</string>
     <string name="login_button_label">Login</string>
-    <string name="background_image_description"></string>
-    <string name="avatar_image_description"></string>
-    <string name="logo_image_description"></string>
-    <string name="attachment_image_description"></string>
-    <string name="message_hint">Hello Aurora…</string>
+
+    <!-- images contentDescription -->
+    <string name="background_image_description"/>
+    <string name="avatar_image_description"/>
+    <string name="logo_image_description"/>
+    <string name="attachment_image_description"/>
+
+    <!-- Error messages -->
+    <string name="messages_error">Sorry, an error occurred while retrieving your messages</string>
+    <string name="send_message_error">Sorry an error occurred while sending your message, please try again</string>
+    <string name="login_error">Sorry, your login failed. Please check your credentials and try again</string>
 
 </resources>

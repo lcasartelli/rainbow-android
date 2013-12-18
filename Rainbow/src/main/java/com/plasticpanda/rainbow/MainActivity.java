@@ -17,10 +17,6 @@ public class MainActivity extends Activity {
 
     private static final String TAG = MainActivity.class.getName();
 
-    private MainActivity() {
-
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

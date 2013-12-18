@@ -1,6 +1,6 @@
 package com.plasticpanda.rainbow;
 
-public interface LoginListener {
+public interface SimpleListener {
 
     public void onSuccess();
 
