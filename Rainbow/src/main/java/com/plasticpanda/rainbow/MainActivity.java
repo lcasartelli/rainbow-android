@@ -6,7 +6,6 @@ import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 
 /**
@@ -25,7 +24,6 @@ public class MainActivity extends Activity {
         String token = sharedPreferences.getString("token", null);
         Fragment fragment;
         if (token != null) {
-            Log.d(TAG, token);
             fragment = MainFragment.getInstance();
         } else {
             fragment = LoginFragment.getInstance();
@@ -36,8 +34,6 @@ public class MainActivity extends Activity {
                 .beginTransaction()
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                 .add(R.id.container, fragment)
-                    // DEBUG
-                    //.add(R.id.container, MainFragment.getInstance())
                 .commit();
         }
     }

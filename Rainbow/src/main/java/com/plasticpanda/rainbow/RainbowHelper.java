@@ -8,6 +8,10 @@ import android.util.Log;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
+import com.pubnub.api.Callback;
+import com.pubnub.api.Pubnub;
+import com.pubnub.api.PubnubError;
+import com.pubnub.api.PubnubException;
 
 import org.apache.http.Header;
 import org.json.JSONArray;
@@ -47,9 +51,14 @@ public class RainbowHelper {
             this.sharedPreferences = this.context.getSharedPreferences("rainbow", Context.MODE_PRIVATE);
             this.token = this.sharedPreferences.getString("token", null);
             this.user = this.sharedPreferences.getString("user", null);
+
+            // Try PUBNUB
+            pubNub();
+
         } else {
             Log.e(TAG, "Context null");
         }
+
     }
 
     /** Singleton pattern
@@ -76,6 +85,53 @@ public class RainbowHelper {
             .putString("user", u)
             .commit();
         this.user = u;
+    }
+
+    private void pubNub() {
+        Pubnub pn = new Pubnub(
+            this.context.getString(R.string.PN_publishKey),
+            this.context.getString(R.string.PN_subscribeKey)
+        );
+        String pn_channel = context.getString(R.string.PN_channel);
+
+        try {
+            pn.subscribe(pn_channel, new Callback() {
+                @Override
+                public void connectCallback(String channel, Object message) {
+                    Log.d(TAG, "SUBSCRIBE : CONNECT on channel:" + channel
+                        + " : " + message.getClass() + " : "
+                        + message.toString());
+                }
+
+                @Override
+                public void disconnectCallback(String channel, Object message) {
+                    Log.d(TAG, "SUBSCRIBE : DISCONNECT on channel:" + channel
+                        + " : " + message.getClass() + " : "
+                        + message.toString());
+                }
+
+                public void reconnectCallback(String channel, Object message) {
+                    Log.d(TAG, "SUBSCRIBE : RECONNECT on channel:" + channel
+                        + " : " + message.getClass() + " : "
+                        + message.toString());
+                }
+
+                @Override
+                public void successCallback(String channel, Object message) {
+                    Log.d(TAG, "SUBSCRIBE : " + channel + " : "
+                        + message.getClass() + " : " + message.toString());
+                }
+
+                @Override
+                public void errorCallback(String channel, PubnubError error) {
+                    Log.d(TAG, "SUBSCRIBE : ERROR on channel " + channel
+                        + " : " + error.toString());
+                }
+            }
+            );
+        } catch (PubnubException e) {
+            Log.d(TAG, e.toString());
+        }
     }
 
     /**
@@ -220,6 +276,24 @@ public class RainbowHelper {
         client.get(url, params, responseHandler);
     }
 
+    private static String getMessageContent(Message lastQueued, Message message) {
+        String txt = "";
+        if (lastQueued == null) {
+            if (message.isEncrypted()) {
+                txt = message.getClearMessage();
+            } else {
+                txt = message.getMessage();
+            }
+        } else {
+            if (lastQueued.isEncrypted()) {
+                txt = lastQueued.getClearMessage() + "\n" + message.getClearMessage();
+            } else {
+                txt = lastQueued.getMessage() + "\n" + message.getMessage();
+            }
+        }
+        return txt;
+    }
+
     /**
      * @param queue message
      * @return compressed list
@@ -230,25 +304,28 @@ public class RainbowHelper {
             if ((i > 0) &&
                 (data.get(data.size() - 1).getAuthor().compareTo(queue.get(i).getAuthor()) == 0)) {
                 Message last = data.get(data.size() - 1);
-                String message;
-                if (last.isEncrypted()) {
-                    message = last.getClearMessage() + "\n" + queue.get(i).getClearMessage();
-                } else {
-                    message = last.getMessage() + "\n" + queue.get(i).getMessage();
-                }
-
-                last.setMessage(message);
+                String messageContent = getMessageContent(last, queue.get(i));
+                last.setMessage(messageContent);
             } else {
                 Message first = queue.get(i);
-                if (first.isEncrypted()) {
-                    first.setMessage(first.getClearMessage());
-                } else {
-                    first.setMessage(first.getMessage());
-                }
+                String messageContent = getMessageContent(null, queue.get(i));
+                first.setMessage(messageContent);
                 data.add(first);
             }
         }
         return data;
+    }
+
+    private static Message getMessage(JSONObject json) throws JSONException {
+        Message message;
+        String _id = json.getString("_id");
+        String from = json.getString("from");
+        boolean enc = json.getBoolean("enc");
+        String messageContent = json.getString("message");
+        long timestamp = json.getLong("timestamp");
+        Date date = new Date(timestamp);
+        message = new Message(_id, from, messageContent, date, enc);
+        return message;
     }
 
     /**
@@ -263,13 +340,8 @@ public class RainbowHelper {
 
             for (int i = 0; i < jsonMessages.length(); ++i) {
                 JSONObject msg = jsonMessages.getJSONObject(i);
-                String _id = msg.getString("_id");
-                String from = msg.getString("from");
-                boolean enc = msg.getBoolean("enc");
-                String message = msg.getString("message");
-                long timestamp = msg.getLong("timestamp");
-                Date date = new Date(timestamp);
-                messages.add(new Message(_id, from, message, date, enc));
+                Message message = getMessage(msg);
+                messages.add(message);
             }
 
         } catch (JSONException e) {

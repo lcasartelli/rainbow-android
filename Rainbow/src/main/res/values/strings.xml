@@ -9,6 +9,12 @@
     <string name="login_url">/login</string>
     <string name="messages_url">/chat</string>
 
+    <!-- PUBNUB Credentials -->
+    <string name="PN_publishKey">pub-c-4ead5767-2d9a-4297-abf6-05c68fe0e28f</string>
+    <string name="PN_subscribeKey">sub-c-381267c4-5d97-11e3-a911-02ee2ddab7fe</string>
+    <string name="PN_secretKey">sec-c-Y2MwYTA1YWEtYjg1Ni00MTY1LWFjMjQtZmJjYTdlNjM4YzEy</string>
+    <string name="PN_channel">panda</string>
+
     <!-- Labels -->
     <string name="user_label">User</string>
     <string name="code_label">Code</string>
