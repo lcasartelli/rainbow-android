@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +15,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -69,6 +71,9 @@ public class MainFragment extends ListFragment {
             });
         }
 
+        // get messages from database
+        refreshAdapter();
+        // get messages from remote database
         getMessages();
 
         return rootView;
@@ -97,25 +102,33 @@ public class MainFragment extends ListFragment {
     private void sendMessage() {
         if (this.context != null && this.context.findViewById(R.id.editText) != null) {
             EditText messageView = (EditText) this.context.findViewById(R.id.editText);
-            if (messageView.getText() != null) {
-                String message = messageView.getText().toString();
+            if (messageView.getText() != null && messageView.getText().toString().length() > 0) {
+                final String message = messageView.getText().toString();
 
-                RainbowHelper db = RainbowHelper.getInstance(this.context);
-                db.sendMessage(message, new SimpleListener() {
-                    @Override
-                    public void onSuccess() {
-                        getMessages();
-                    }
+                messageView.setText("".toCharArray(), 0, 0);
 
+                context.runOnUiThread(new Runnable() {
                     @Override
-                    public void onError() {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.send_message_error),
-                            Toast.LENGTH_LONG)
-                            .show();
+                    public void run() {
+                        RainbowHelper.getInstance(context).sendMessage(message, new SimpleListener() {
+                            @Override
+                            public void onSuccess() {
+                                refreshAdapter();
+                            }
+
+                            @Override
+                            public void onError() {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.send_message_error),
+                                    Toast.LENGTH_LONG)
+                                    .show();
+                            }
+                        });
                     }
                 });
+
+
             }
         }
     }
@@ -126,8 +139,7 @@ public class MainFragment extends ListFragment {
         db.getMessages(new MessagesListener() {
             @Override
             public void onSuccess(List<Message> messages) {
-                List<Message> compressed = RainbowHelper.compressMessages(messages);
-                refreshAdapter(compressed);
+                refreshAdapter();
             }
 
             @Override
@@ -145,10 +157,22 @@ public class MainFragment extends ListFragment {
         });
     }
 
-    public synchronized void refreshAdapter(List<Message> messages) {
-        this.messages.clear();
-        this.messages.addAll(RainbowHelper.compressMessages(messages));
-        mAdapter.notifyDataSetChanged();
+    public synchronized void refreshAdapter() {
+        this.context.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    List<Message> data = RainbowHelper.getInstance(context).getMessageFromDb();
+                    List<Message> compressed = RainbowHelper.compressMessages(data);
+                    messages.clear();
+                    messages.addAll(compressed);
+                    Log.i(TAG, "refreshed");
+                    mAdapter.notifyDataSetChanged();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
 

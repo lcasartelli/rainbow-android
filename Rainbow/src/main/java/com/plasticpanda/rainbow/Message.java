@@ -1,7 +1,5 @@
 package com.plasticpanda.rainbow;
 
-import android.util.Log;
-
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -16,7 +14,7 @@ public class Message {
 
     private static final String TAG = Message.class.getName();
 
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(id = true)
     private String messageID;
     @DatabaseField(canBeNull = false)
     private String author;
@@ -24,8 +22,9 @@ public class Message {
     private Date date;
     @DatabaseField(canBeNull = false)
     private String message;
-
+    @DatabaseField(canBeNull = false)
     private boolean isEncrypted;
+    @DatabaseField(canBeNull = false, defaultValue = "false")
     private boolean sending;
 
     /**
@@ -41,6 +40,19 @@ public class Message {
         this.message = message;
         this.date = date;
         this.isEncrypted = isEncrypted;
+        this.sending = false;
+    }
+
+    public Message(String messageID, String author, String message, Date date, boolean isEncrypted, boolean sending) {
+        this.messageID = messageID;
+        this.author = author;
+        this.message = message;
+        this.date = date;
+        this.isEncrypted = isEncrypted;
+        this.sending = sending;
+    }
+
+    public Message() {
     }
 
     public String getMessageID() {
@@ -65,17 +77,6 @@ public class Message {
 
     public String getMessage() {
         return message;
-    }
-
-    public String getClearMessage() {
-        String msg;
-        try {
-            msg = SecurityUtils.decrypt(this.message);
-        } catch (Exception e) {
-            msg = this.message;
-            Log.e(TAG, "Decryption error: " + this.toString());
-        }
-        return msg;
     }
 
     public void setMessage(String message) {

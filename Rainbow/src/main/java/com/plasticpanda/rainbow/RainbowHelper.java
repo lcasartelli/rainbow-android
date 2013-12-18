@@ -1,10 +1,12 @@
 package com.plasticpanda.rainbow;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.provider.Settings;
 import android.util.Log;
 
+import com.j256.ormlite.dao.Dao;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
@@ -18,6 +20,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -33,24 +36,30 @@ public class RainbowHelper {
 
     private static final String TAG = RainbowHelper.class.getName();
 
-    private Context context;
+    private Activity context;
     private SharedPreferences sharedPreferences;
     private String token;
     private String user;
     private String UUID;
+    private Dao<Message, String> dao;
 
     private static RainbowHelper sharedInstance;
 
     /**
      * @param context application context
      */
-    private RainbowHelper(Context context) {
+    private RainbowHelper(Activity context) {
         this.context = context;
         if (this.context != null) {
             this.UUID = Settings.Secure.getString(this.context.getContentResolver(), Settings.Secure.ANDROID_ID);
             this.sharedPreferences = this.context.getSharedPreferences("rainbow", Context.MODE_PRIVATE);
             this.token = this.sharedPreferences.getString("token", null);
             this.user = this.sharedPreferences.getString("user", null);
+            try {
+                this.dao = DatabaseHelper.getInstance(this.context).getDao();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
 
             // Try PUBNUB
             pubNub();
@@ -66,7 +75,7 @@ public class RainbowHelper {
      * @param context application context
      * @return instance
      */
-    public synchronized static RainbowHelper getInstance(Context context) {
+    public synchronized static RainbowHelper getInstance(Activity context) {
         if (sharedInstance == null) {
             sharedInstance = new RainbowHelper(context);
         }
@@ -117,9 +126,23 @@ public class RainbowHelper {
                 }
 
                 @Override
-                public void successCallback(String channel, Object message) {
-                    Log.d(TAG, "SUBSCRIBE : " + channel + " : "
-                        + message.getClass() + " : " + message.toString());
+                public void successCallback(String channel, final Object data) {
+
+                    context.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                JSONObject obj = new JSONObject(data.toString());
+                                Message msg = getMessage(obj);
+                                dao.create(msg);
+                                MainFragment.getInstance().refreshAdapter();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
                 }
 
                 @Override
@@ -229,7 +252,7 @@ public class RainbowHelper {
                 List<Message> messages = null;
                 try {
                     JSONObject resp = new JSONObject(s);
-                    messages = RainbowHelper.parseMessages(resp);
+                    messages = parseMessages(resp);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -277,16 +300,16 @@ public class RainbowHelper {
     }
 
     private static String getMessageContent(Message lastQueued, Message message) {
-        String txt = "";
+        String txt;
         if (lastQueued == null) {
             if (message.isEncrypted()) {
-                txt = message.getClearMessage();
+                txt = SecurityUtils.decrypt(message.getMessage());
             } else {
                 txt = message.getMessage();
             }
         } else {
             if (lastQueued.isEncrypted()) {
-                txt = lastQueued.getClearMessage() + "\n" + message.getClearMessage();
+                txt = SecurityUtils.decrypt(lastQueued.getMessage()) + "\n" + SecurityUtils.decrypt(message.getMessage());
             } else {
                 txt = lastQueued.getMessage() + "\n" + message.getMessage();
             }
@@ -318,13 +341,13 @@ public class RainbowHelper {
 
     private static Message getMessage(JSONObject json) throws JSONException {
         Message message;
-        String _id = json.getString("_id");
         String from = json.getString("from");
         boolean enc = json.getBoolean("enc");
         String messageContent = json.getString("message");
         long timestamp = json.getLong("timestamp");
+        String _id = from + "-" + timestamp;
         Date date = new Date(timestamp);
-        message = new Message(_id, from, messageContent, date, enc);
+        message = new Message(_id, from, messageContent, date, enc, false);
         return message;
     }
 
@@ -332,7 +355,7 @@ public class RainbowHelper {
      * @param data JSON data
      * @return messages
      */
-    private static List<Message> parseMessages(JSONObject data) {
+    private List<Message> parseMessages(JSONObject data) {
         List<Message> messages = new ArrayList<Message>();
         // Parse messages
         try {
@@ -341,6 +364,16 @@ public class RainbowHelper {
             for (int i = 0; i < jsonMessages.length(); ++i) {
                 JSONObject msg = jsonMessages.getJSONObject(i);
                 Message message = getMessage(msg);
+                try {
+                    // Storing message
+                    if (!this.dao.idExists((message.getMessageID()))) {
+                        this.dao.create(message);
+                    } else {
+                        Log.i(TAG, "Message already exists: " + message.toString());
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
                 messages.add(message);
             }
 
@@ -354,6 +387,19 @@ public class RainbowHelper {
             }
         };
 
+        Collections.sort(messages, comparator);
+
+        return messages;
+    }
+
+    public List<Message> getMessageFromDb() throws SQLException {
+        List<Message> messages = this.dao.queryForAll();
+        // Sort by timestamp
+        Comparator<Message> comparator = new Comparator<Message>() {
+            public int compare(Message c1, Message c2) {
+                return c1.getDate().compareTo(c2.getDate());
+            }
+        };
         Collections.sort(messages, comparator);
 
         return messages;
@@ -401,11 +447,28 @@ public class RainbowHelper {
             }
         };
 
+        String timestamp = String.valueOf(new Date().getTime());
+        String messageID = this.user + "-" + timestamp;
+        String cryptedMessage = SecurityUtils.encrypt(message);
+        final Message msg = new Message(messageID, this.user, cryptedMessage, new Date(), true, true);
+
+        // Storing message
+        context.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    DatabaseHelper.getInstance(context).getDao().create(msg);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         params.put("token", this.token);
-        params.put("from", this.user);
+        params.put("from", msg.getAuthor());
         params.put("did", "" + this.UUID);
-        params.put("timestamp", String.valueOf(new Date().getTime()));
-        params.put("message", SecurityUtils.encrypt(message));
+        params.put("timestamp", String.valueOf(msg.getDate().getTime()));
+        params.put("message", msg.getMessage());
         params.put("enc", "1");
 
         String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.messages_url);

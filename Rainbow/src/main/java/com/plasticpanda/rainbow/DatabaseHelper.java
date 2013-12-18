@@ -20,7 +20,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static final String DATABASE_NAME = "RainbowDb.db";
     private static final int DATABASE_VERSION = 1;
 
-    private Dao<Message, Integer> simpleDao = null;
+    private Dao<Message, String> simpleDao = null;
     private RuntimeExceptionDao<Message, Integer> simpleRuntimeDao = null;
 
     private static DatabaseHelper sharedInstance;
@@ -45,8 +45,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         Log.i(TAG, "onCreate");
         try {
             TableUtils.createTable(connectionSource, Message.class);
-            // here we try inserting data in the on-create as a test
-            RuntimeExceptionDao<Message, Integer> dao = getSimpleDataDao();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -73,7 +71,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      * Returns the Database Access Object (DAO) for our SimpleData class. It will create it or just give the cached
      * value.
      */
-    public Dao<Message, Integer> getDao() throws SQLException {
+    public Dao<Message, String> getDao() throws SQLException {
         if (simpleDao == null) {
             simpleDao = getDao(Message.class);
         }

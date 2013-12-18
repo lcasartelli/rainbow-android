@@ -1,9 +1,9 @@
 package com.plasticpanda.rainbow;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.app.Service;
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -42,7 +42,7 @@ public class LoginFragment extends Fragment {
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        final Context context = getActivity();
+        final Activity context = getActivity();
         if (context != null) {
             final RainbowHelper dbHelper = RainbowHelper.getInstance(context);
             Button btn = (Button) view.findViewById(R.id.login);
