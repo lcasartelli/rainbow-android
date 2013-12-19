@@ -81,12 +81,13 @@ public class MainFragment extends ListFragment {
     }
 
     public static String getDateFormat(Date date) {
-        String format = "HH:mm";
-        SimpleDateFormat formatYear = new SimpleDateFormat("yyyy");
-        SimpleDateFormat formatMonth = new SimpleDateFormat("MMM");
-        SimpleDateFormat formatWeek = new SimpleDateFormat("w");
-        SimpleDateFormat formatDay = new SimpleDateFormat("dd");
+        String format;
         Date now = new Date();
+        SimpleDateFormat formatYear = new SimpleDateFormat("yyyy"),
+            formatMonth = new SimpleDateFormat("MMM"),
+            formatWeek = new SimpleDateFormat("w"),
+            formatDay = new SimpleDateFormat("dd");
+
         if (formatYear.format(now).compareTo(formatYear.format(date)) != 0) {
             format = "d MMM yyyy";
         } else if (formatMonth.format(now).compareTo(formatMonth.format(date)) != 0) {
@@ -95,6 +96,8 @@ public class MainFragment extends ListFragment {
             format = "E d MMM";
         } else if (formatDay.format(now).compareTo(formatDay.format(date)) != 0) {
             format = "E HH:mm";
+        } else {
+            format = "HH:mm";
         }
 
         return format;
@@ -192,7 +195,6 @@ public class MainFragment extends ListFragment {
 
         private LayoutInflater mInflater;
         private List<Message> list;
-        private static final int cellID = R.layout.list_item;
 
         public ChatAdapter(Context context, List<Message> list) {
             mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -214,30 +216,68 @@ public class MainFragment extends ListFragment {
             return position;
         }
 
-
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+            Message message = this.list.get(position);
+
             if (convertView == null) {
-                convertView = mInflater.inflate(cellID, null);
+                if (message.getType().compareTo("i") == 0) {
+                    convertView = mInflater.inflate(R.layout.list_item_img, null);
+                } else {
+                    convertView = mInflater.inflate(R.layout.list_item_text, null);
+                }
             }
 
-            if ((convertView != null) &&
-                (convertView.findViewById(R.id.author) != null) &&
-                (convertView.findViewById(R.id.message) != null) &&
-                (convertView.findViewById(R.id.message_time) != null)) {
-
-                TextView authorView = (TextView) convertView.findViewById(R.id.author);
-                TextView messageView = (TextView) convertView.findViewById(R.id.message);
-                TextView messageTimeView = (TextView) convertView.findViewById(R.id.message_time);
-                Message message = this.list.get(position);
-                authorView.setText(message.getAuthor());
-                messageView.setText(message.getMessage());
-                SimpleDateFormat format = new SimpleDateFormat(getDateFormat(message.getDate()));
-                String date = format.format(message.getDate());
-                messageTimeView.setText(date);
+            if (convertView != null) {
+                if (message.getType().compareTo("i") == 0) {
+                    loadImageCell(message, convertView);
+                } else {
+                    loadTextCell(message, convertView);
+                }
             }
 
             return convertView;
+        }
+
+        private void loadTextCell(Message message, View view) {
+            if ((view != null) &&
+                (view.findViewById(R.id.author_text) != null) &&
+                (view.findViewById(R.id.message_text) != null) &&
+                (view.findViewById(R.id.message_time_text) != null)) {
+
+                TextView authorView = (TextView) view.findViewById(R.id.author_text);
+                TextView messageView = (TextView) view.findViewById(R.id.message_text);
+                TextView messageTimeView = (TextView) view.findViewById(R.id.message_time_text);
+
+                loadBaseCell(message, authorView, messageTimeView);
+
+                messageView.setText(message.getMessage());
+            }
+        }
+
+        private void loadImageCell(Message message, View view) {
+            if ((view != null) &&
+                (view.findViewById(R.id.author_img) != null) &&
+                (view.findViewById(R.id.message_img) != null) &&
+                (view.findViewById(R.id.message_time_img) != null)) {
+
+                TextView authorView = (TextView) view.findViewById(R.id.author_img);
+                TextView messageView = (TextView) view.findViewById(R.id.message_img);
+                TextView messageTimeView = (TextView) view.findViewById(R.id.message_time_img);
+
+                loadBaseCell(message, authorView, messageTimeView);
+
+                messageView.setText(message.getMessage());
+            }
+        }
+
+        private void loadBaseCell(Message message, TextView authorView, TextView messageTimeView) {
+            // author
+            authorView.setText(message.getAuthor());
+            // date
+            SimpleDateFormat format = new SimpleDateFormat(getDateFormat(message.getDate()));
+            String date = format.format(message.getDate());
+            messageTimeView.setText(date);
         }
     }
 }

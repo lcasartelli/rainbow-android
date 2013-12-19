@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="5dip"
+                android:background="#32000000">
+
+    <!--  ListRow Left sied Thumbnail image -->
+    <LinearLayout
+            android:id="@+id/author_image_img"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="3dip"
+            android:layout_alignParentLeft="true"
+            android:layout_marginRight="8dip">
+
+        <ImageView
+                android:id="@+id/list_image_img"
+                android:layout_width="50dip"
+                android:layout_height="50dip"
+                android:contentDescription="@string/avatar_image_description"
+                android:src="@drawable/avatar"/>
+
+    </LinearLayout>
+
+    <TextView
+            android:id="@+id/author_img"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/author_image_img"
+            android:layout_toRightOf="@+id/author_image_img"
+            android:textColor="#ffffff"
+            android:typeface="sans"
+            android:textStyle="bold"
+            android:textSize="13dp"/>
+
+    <TextView
+            android:id="@+id/message_img"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/author_img"
+            android:textColor="#ffffff"
+            android:layout_marginTop="5dip"
+            android:layout_toRightOf="@+id/author_image_img"
+            android:layout_marginRight="5dp"
+            android:textSize="15dp"/>
+
+    <TextView
+            android:id="@+id/message_time_img"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignTop="@id/author_img"
+            android:gravity="right"
+            android:layout_marginRight="5dip"
+            android:textSize="11dip"
+            android:textColor="#ffffff"
+            android:textStyle="bold"
+            android:singleLine="false"/>
+
+</RelativeLayout>

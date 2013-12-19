@@ -12,8 +12,6 @@ import java.util.Date;
 @DatabaseTable(tableName = "messages")
 public class Message {
 
-    private static final String TAG = Message.class.getName();
-
     @DatabaseField(id = true)
     private String messageID;
     @DatabaseField(canBeNull = false)
@@ -27,6 +25,9 @@ public class Message {
     @DatabaseField(canBeNull = false, defaultValue = "false")
     private boolean sending;
 
+    @DatabaseField(canBeNull = false, defaultValue = "m")
+    private String type;
+
     /**
      * @param messageID   message id
      * @param author      message author
@@ -35,22 +36,23 @@ public class Message {
      * @param isEncrypted encryption
      */
     public Message(String messageID, String author, String message, Date date, boolean isEncrypted) {
-        this.messageID = messageID;
-        this.author = author;
-        this.message = message;
-        this.date = date;
-        this.isEncrypted = isEncrypted;
-        this.sending = false;
+        this(messageID, author, message, date, isEncrypted, false, "m");
     }
 
     public Message(String messageID, String author, String message, Date date, boolean isEncrypted, boolean sending) {
+        this(messageID, author, message, date, isEncrypted, sending, "m");
+    }
+
+    public Message(String messageID, String author, String message, Date date, boolean isEncrypted, boolean sending, String type) {
         this.messageID = messageID;
         this.author = author;
         this.message = message;
         this.date = date;
         this.isEncrypted = isEncrypted;
         this.sending = sending;
+        this.type = type;
     }
+
 
     public Message() {
     }
@@ -104,5 +106,13 @@ public class Message {
             ", message='" + message + '\'' +
             ", isEncrypted=" + isEncrypted +
             '}';
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

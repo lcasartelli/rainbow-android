@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.6.+'
+        classpath 'com.android.tools.build:gradle:0.7.+'
     }
 }
 apply plugin: 'android'
@@ -38,4 +38,3 @@ dependencies {
     compile 'com.android.support:support-v13:+'
     compile fileTree(dir: 'libs', include: '*.jar')
 }
-

@@ -342,6 +342,8 @@ public class RainbowHelper {
                 first.setMessage(messageContent);
                 data.add(first);
             }
+
+            Log.d("AAAA", queue.get(i).getMessageID());
         }
         return data;
     }
@@ -475,7 +477,7 @@ public class RainbowHelper {
         params.put("token", this.token);
         params.put("from", msg.getAuthor());
         params.put("did", "" + this.UUID);
-        params.put("timestamp", String.valueOf(msg.getDate().getTime()));
+        params.put("timestamp", timestamp);
         params.put("message", msg.getMessage());
         params.put("enc", "1");
 
