@@ -1,17 +1,29 @@
-package com.plasticpanda.rainbow;
+/*
+ * Copyright (C) 2013 Luca Casartelli luca@plasticpanda.com, Plastic Panda
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.plasticpanda.rainbow.db;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 import java.util.Date;
 
-/**
- * @author Luca Casartelli
- */
-
-@DatabaseTable(tableName = "messages")
+@DatabaseTable(tableName = DatabaseContract.MESSAGES_TABLE_NAME)
 public class Message {
-
     @DatabaseField(id = true)
     private String messageID;
     @DatabaseField(canBeNull = false)
@@ -24,9 +36,11 @@ public class Message {
     private boolean isEncrypted;
     @DatabaseField(canBeNull = false, defaultValue = "false")
     private boolean sending;
-
     @DatabaseField(canBeNull = false, defaultValue = "m")
-    private String type;
+    private char type;
+
+    public static final char TEXT_MESSAGE = 't';
+    public static final char IMAGE_MESSAGE = 'i';
 
     /**
      * @param messageID   message id
@@ -36,14 +50,14 @@ public class Message {
      * @param isEncrypted encryption
      */
     public Message(String messageID, String author, String message, Date date, boolean isEncrypted) {
-        this(messageID, author, message, date, isEncrypted, false, "m");
+        this(messageID, author, message, date, isEncrypted, false, TEXT_MESSAGE);
     }
 
     public Message(String messageID, String author, String message, Date date, boolean isEncrypted, boolean sending) {
-        this(messageID, author, message, date, isEncrypted, sending, "m");
+        this(messageID, author, message, date, isEncrypted, sending, TEXT_MESSAGE);
     }
 
-    public Message(String messageID, String author, String message, Date date, boolean isEncrypted, boolean sending, String type) {
+    public Message(String messageID, String author, String message, Date date, boolean isEncrypted, boolean sending, char type) {
         this.messageID = messageID;
         this.author = author;
         this.message = message;
@@ -97,6 +111,14 @@ public class Message {
         return isEncrypted;
     }
 
+    public char getType() {
+        return type;
+    }
+
+    public void setType(char type) {
+        this.type = type;
+    }
+
     @Override
     public String toString() {
         return "Message{" +
@@ -106,13 +128,5 @@ public class Message {
             ", message='" + message + '\'' +
             ", isEncrypted=" + isEncrypted +
             '}';
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 }

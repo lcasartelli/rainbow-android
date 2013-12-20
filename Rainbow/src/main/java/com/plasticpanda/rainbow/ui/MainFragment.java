@@ -1,8 +1,27 @@
-package com.plasticpanda.rainbow;
+/*
+ * Copyright (C) 2013 Luca Casartelli luca@plasticpanda.com, Plastic Panda
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.plasticpanda.rainbow.ui;
 
 import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,8 +32,18 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.plasticpanda.rainbow.R;
+import com.plasticpanda.rainbow.core.ImagesHelper;
+import com.plasticpanda.rainbow.core.RainbowHelper;
+import com.plasticpanda.rainbow.db.DatabaseHelper;
+import com.plasticpanda.rainbow.db.ImageMessage;
+import com.plasticpanda.rainbow.db.Message;
+import com.plasticpanda.rainbow.utils.MessagesListener;
+import com.plasticpanda.rainbow.utils.SimpleListener;
 
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -80,7 +109,7 @@ public class MainFragment extends ListFragment {
         return rootView;
     }
 
-    public static String getDateFormat(Date date) {
+    private static String getDateFormat(Date date) {
         String format;
         Date now = new Date();
         SimpleDateFormat formatYear = new SimpleDateFormat("yyyy"),
@@ -123,11 +152,16 @@ public class MainFragment extends ListFragment {
 
                                 @Override
                                 public void onError() {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.send_message_error),
-                                        Toast.LENGTH_LONG)
-                                        .show();
+                                    context.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(R.string.send_message_error),
+                                                Toast.LENGTH_LONG)
+                                                .show();
+                                        }
+                                    });
                                 }
                             });
                         }
@@ -140,7 +174,7 @@ public class MainFragment extends ListFragment {
     }
 
     // DEBUG
-    public void getMessages() {
+    void getMessages() {
         RainbowHelper db = RainbowHelper.getInstance(this.context);
         db.getMessages(new MessagesListener() {
             @Override
@@ -213,7 +247,28 @@ public class MainFragment extends ListFragment {
 
         @Override
         public long getItemId(int position) {
-            return position;
+            // use timestamp
+            return list.get(position).getDate().getTime();
+        }
+
+        @Override
+        public boolean isEnabled(int position) {
+            return false;
+        }
+
+        @Override
+        public int getViewTypeCount() {
+            return 2;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            Message message = list.get(position);
+            int type = 0;
+            if (message.getType() == Message.IMAGE_MESSAGE || message.getMessage().matches(".*amazonaws.*")) {
+                type = 1;
+            }
+            return type;
         }
 
         @Override
@@ -221,7 +276,7 @@ public class MainFragment extends ListFragment {
             Message message = this.list.get(position);
 
             if (convertView == null) {
-                if (message.getType().compareTo("i") == 0) {
+                if (message.getType() == Message.IMAGE_MESSAGE || message.getMessage().matches(".*amazonaws.*")) {
                     convertView = mInflater.inflate(R.layout.list_item_img, null);
                 } else {
                     convertView = mInflater.inflate(R.layout.list_item_text, null);
@@ -229,7 +284,7 @@ public class MainFragment extends ListFragment {
             }
 
             if (convertView != null) {
-                if (message.getType().compareTo("i") == 0) {
+                if (message.getType() == Message.IMAGE_MESSAGE || message.getMessage().matches(".*amazonaws.*")) {
                     loadImageCell(message, convertView);
                 } else {
                     loadTextCell(message, convertView);
@@ -255,19 +310,46 @@ public class MainFragment extends ListFragment {
             }
         }
 
-        private void loadImageCell(Message message, View view) {
+        private void loadImageCell(final Message message, View view) {
+            // TODO: load image
+
             if ((view != null) &&
                 (view.findViewById(R.id.author_img) != null) &&
-                (view.findViewById(R.id.message_img) != null) &&
+                (view.findViewById(R.id.image_img) != null) &&
                 (view.findViewById(R.id.message_time_img) != null)) {
 
                 TextView authorView = (TextView) view.findViewById(R.id.author_img);
-                TextView messageView = (TextView) view.findViewById(R.id.message_img);
+                // DEBUG
+                final ImageView imageView = (ImageView) view.findViewById(R.id.image_img);
                 TextView messageTimeView = (TextView) view.findViewById(R.id.message_time_img);
-
                 loadBaseCell(message, authorView, messageTimeView);
+                try {
+                    if (DatabaseHelper.getInstance(context).getImagesDao().queryForId(message.getMessageID()) != null) {
+                        ImageMessage img = DatabaseHelper.getInstance(context).getImagesDao().queryForId(message.getMessageID());
+                        Bitmap b = BitmapFactory.decodeFile(img.getURI());
+                        imageView.setImageBitmap(b);
+                    } else {
+                        ImagesHelper.getInstance(context).saveImage(message, new SimpleListener() {
+                            @Override
+                            public void onSuccess() {
+                                try {
+                                    ImageMessage img = DatabaseHelper.getInstance(context).getImagesDao().queryForId(message.getMessageID());
+                                    Bitmap b = BitmapFactory.decodeFile(img.getURI());
+                                    imageView.setImageBitmap(b);
+                                } catch (SQLException e) {
+                                    e.printStackTrace();
+                                }
+                            }
 
-                messageView.setText(message.getMessage());
+                            @Override
+                            public void onError() {
+                            }
+                        });
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
             }
         }
 

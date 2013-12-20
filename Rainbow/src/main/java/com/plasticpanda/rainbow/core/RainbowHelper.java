@@ -1,4 +1,21 @@
-package com.plasticpanda.rainbow;
+/*
+ * Copyright (C) 2013 Luca Casartelli luca@plasticpanda.com, Plastic Panda
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.plasticpanda.rainbow.core;
 
 import android.app.Activity;
 import android.content.Context;
@@ -11,6 +28,13 @@ import com.j256.ormlite.dao.Dao;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
+import com.plasticpanda.rainbow.R;
+import com.plasticpanda.rainbow.db.DatabaseHelper;
+import com.plasticpanda.rainbow.db.Message;
+import com.plasticpanda.rainbow.ui.MainFragment;
+import com.plasticpanda.rainbow.utils.MessagesListener;
+import com.plasticpanda.rainbow.utils.SecurityUtils;
+import com.plasticpanda.rainbow.utils.SimpleListener;
 import com.pubnub.api.Callback;
 import com.pubnub.api.Pubnub;
 import com.pubnub.api.PubnubError;
@@ -27,10 +51,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-
-/**
- * @author Luca Casartelli
- */
 
 
 public class RainbowHelper {
@@ -57,7 +77,7 @@ public class RainbowHelper {
             this.token = this.sharedPreferences.getString("token", null);
             this.user = this.sharedPreferences.getString("user", null);
             try {
-                this.dao = DatabaseHelper.getInstance(this.context).getDao();
+                this.dao = DatabaseHelper.getInstance(this.context).getMessagesDao();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -168,7 +188,7 @@ public class RainbowHelper {
 
     /**
      * @param username      username
-     * @param code          Authy code
+     * @param code          authy code
      * @param loginListener login listener
      */
     public void performLogin(String username, String code, final SimpleListener loginListener) {
@@ -306,20 +326,12 @@ public class RainbowHelper {
         client.get(url, params, responseHandler);
     }
 
-    private static String getMessageContent(Message lastQueued, Message message) {
+    private static String concatMessageContent(Message lastQueued, Message message) {
         String txt;
         if (lastQueued == null) {
-            if (message.isEncrypted()) {
-                txt = SecurityUtils.decrypt(message.getMessage());
-            } else {
-                txt = message.getMessage();
-            }
+            txt = message.getMessage();
         } else {
-            if (lastQueued.isEncrypted()) {
-                txt = SecurityUtils.decrypt(lastQueued.getMessage()) + "\n" + SecurityUtils.decrypt(message.getMessage());
-            } else {
-                txt = lastQueued.getMessage() + "\n" + message.getMessage();
-            }
+            txt = lastQueued.getMessage() + "\n" + message.getMessage();
         }
         return txt;
     }
@@ -331,19 +343,22 @@ public class RainbowHelper {
     public static List<Message> compressMessages(List<Message> queue) {
         List<Message> data = new ArrayList<Message>();
         for (int i = 0; i < queue.size(); ++i) {
-            if ((i > 0) &&
-                (data.get(data.size() - 1).getAuthor().compareTo(queue.get(i).getAuthor()) == 0)) {
+            queue.get(i).setMessage(SecurityUtils.decrypt(queue.get(i).getMessage()));
+            if (i > 0 &&
+                (data.get(data.size() - 1).getAuthor().compareTo(queue.get(i).getAuthor()) == 0) &&
+                !(
+                    data.get(data.size() - 1).getMessage().matches(".*amazonaws.*") ||
+                        queue.get(i).getMessage().matches(".*amazonaws.*")
+                )) {
                 Message last = data.get(data.size() - 1);
-                String messageContent = getMessageContent(last, queue.get(i));
+                String messageContent = concatMessageContent(last, queue.get(i));
                 last.setMessage(messageContent);
             } else {
                 Message first = queue.get(i);
-                String messageContent = getMessageContent(null, queue.get(i));
+                String messageContent = concatMessageContent(null, queue.get(i));
                 first.setMessage(messageContent);
                 data.add(first);
             }
-
-            Log.d("AAAA", queue.get(i).getMessageID());
         }
         return data;
     }
@@ -356,7 +371,8 @@ public class RainbowHelper {
         long timestamp = json.getLong("timestamp");
         String _id = from + "-" + timestamp;
         Date date = new Date(timestamp);
-        message = new Message(_id, from, messageContent, date, enc, false);
+        char type = json.getString("message_t").charAt(0);
+        message = new Message(_id, from, messageContent, date, enc, false, type);
         return message;
     }
 
@@ -466,7 +482,7 @@ public class RainbowHelper {
             @Override
             protected String doInBackground(Message... messages) {
                 try {
-                    DatabaseHelper.getInstance(context).getDao().create(msg);
+                    DatabaseHelper.getInstance(context).getMessagesDao().create(msg);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -480,6 +496,8 @@ public class RainbowHelper {
         params.put("timestamp", timestamp);
         params.put("message", msg.getMessage());
         params.put("enc", "1");
+        // DEBUG
+        params.put("message_t", "t");
 
         String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.messages_url);
         client.post(url, params, responseHandler);

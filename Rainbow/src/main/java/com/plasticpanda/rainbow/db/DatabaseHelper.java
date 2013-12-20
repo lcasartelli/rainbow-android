@@ -1,4 +1,21 @@
-package com.plasticpanda.rainbow;
+/*
+ * Copyright (C) 2013 Luca Casartelli luca@plasticpanda.com, Plastic Panda
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.plasticpanda.rainbow.db;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -6,7 +23,6 @@ import android.util.Log;
 
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
@@ -17,16 +33,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     private static final String TAG = DatabaseHelper.class.getName();
 
-    private static final String DATABASE_NAME = "RainbowDb.db";
-    private static final int DATABASE_VERSION = 1;
 
-    private Dao<Message, String> simpleDao = null;
-    private RuntimeExceptionDao<Message, Integer> simpleRuntimeDao = null;
+    private Dao<ImageMessage, String> imagesDao = null;
+    private Dao<Message, String> messagesDao = null;
 
     private static DatabaseHelper sharedInstance;
 
     private DatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        super(context, DatabaseContract.DATABASE_NAME, null, DatabaseContract.DATABASE_VERSION);
     }
 
     public static synchronized DatabaseHelper getInstance(Context context) {
@@ -44,6 +58,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void onCreate(SQLiteDatabase db, ConnectionSource connectionSource) {
         Log.i(TAG, "onCreate");
         try {
+            TableUtils.createTable(connectionSource, ImageMessage.class);
             TableUtils.createTable(connectionSource, Message.class);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -58,8 +73,8 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, ConnectionSource connectionSource, int oldVersion, int newVersion) {
         try {
             Log.i(DatabaseHelper.class.getName(), "onUpgrade");
+            TableUtils.dropTable(connectionSource, ImageMessage.class, true);
             TableUtils.dropTable(connectionSource, Message.class, true);
-            // after we drop the old databases, we create the new ones
             onCreate(db, connectionSource);
         } catch (SQLException e) {
             Log.e(TAG, "Can't drop databases", e);
@@ -71,23 +86,25 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      * Returns the Database Access Object (DAO) for our SimpleData class. It will create it or just give the cached
      * value.
      */
-    public Dao<Message, String> getDao() throws SQLException {
-        if (simpleDao == null) {
-            simpleDao = getDao(Message.class);
+    public Dao<Message, String> getMessagesDao() throws SQLException {
+        if (messagesDao == null) {
+            messagesDao = getDao(Message.class);
         }
-        return simpleDao;
+        return messagesDao;
     }
 
+
     /**
-     * Returns the RuntimeExceptionDao (Database Access Object) version of a Dao for our SimpleData class. It will
-     * create it or just give the cached value. RuntimeExceptionDao only through RuntimeExceptions.
+     * Returns the Database Access Object (DAO) for our SimpleData class. It will create it or just give the cached
+     * value.
      */
-    public RuntimeExceptionDao<Message, Integer> getSimpleDataDao() {
-        if (simpleRuntimeDao == null) {
-            simpleRuntimeDao = getRuntimeExceptionDao(Message.class);
+    public Dao<ImageMessage, String> getImagesDao() throws SQLException {
+        if (imagesDao == null) {
+            imagesDao = getDao(ImageMessage.class);
         }
-        return simpleRuntimeDao;
+        return imagesDao;
     }
+
 
     /**
      * Close the database connections and clear any cached DAOs.
@@ -95,6 +112,5 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     @Override
     public void close() {
         super.close();
-        simpleRuntimeDao = null;
     }
 }
