@@ -3,6 +3,7 @@
 
     <!-- App -->
     <string name="app_name">Rainbow</string>
+    <string name="testflight_token">"96e418ca-dc5e-4ed3-b94e-24399b7c945b"</string>
 
     <!-- URLs -->
     <string name="rainbow_base_url">http://fast.plasticpanda.com:23002</string>
