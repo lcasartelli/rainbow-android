@@ -29,9 +29,6 @@ import com.plasticpanda.rainbow.R;
 import com.plasticpanda.rainbow.ui.LoginFragment;
 import com.plasticpanda.rainbow.ui.MainFragment;
 
-/**
- * @author Luca Casartelli
- */
 
 public class MainActivity extends Activity {
 

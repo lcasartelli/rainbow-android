@@ -18,10 +18,10 @@
 package com.plasticpanda.rainbow.ui;
 
 import android.app.Activity;
+import android.app.FragmentTransaction;
 import android.app.ListFragment;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -39,12 +39,12 @@ import android.widget.Toast;
 import com.plasticpanda.rainbow.R;
 import com.plasticpanda.rainbow.core.ImagesHelper;
 import com.plasticpanda.rainbow.core.RainbowHelper;
-import com.plasticpanda.rainbow.db.DatabaseHelper;
-import com.plasticpanda.rainbow.db.ImageMessage;
 import com.plasticpanda.rainbow.db.Message;
+import com.plasticpanda.rainbow.utils.ImageListener;
 import com.plasticpanda.rainbow.utils.MessagesListener;
 import com.plasticpanda.rainbow.utils.SimpleListener;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -175,26 +175,47 @@ public class MainFragment extends ListFragment {
 
     // DEBUG
     void getMessages() {
-        RainbowHelper db = RainbowHelper.getInstance(this.context);
-        db.getMessages(new MessagesListener() {
-            @Override
-            public void onSuccess(List<Message> messages) {
-                refreshAdapter();
-            }
+        final RainbowHelper db = RainbowHelper.getInstance(this.context);
+
+        new AsyncTask<String, Integer, String>() {
 
             @Override
-            public void onSuccess() {
-            }
+            protected String doInBackground(String... strings) {
+                db.getMessages(new MessagesListener() {
+                    @Override
+                    public void onSuccess(List<Message> messages) {
+                        context.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                refreshAdapter();
+                            }
+                        });
+                    }
 
-            @Override
-            public void onError() {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.messages_error),
-                    Toast.LENGTH_LONG)
-                    .show();
+                    @Override
+                    public void onSuccess() {
+                    }
+
+                    @Override
+                    public void onError() {
+
+                        context.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.messages_error),
+                                    Toast.LENGTH_LONG)
+                                    .show();
+                            }
+                        });
+                    }
+                });
+                return null;
             }
-        });
+        }.execute("0");
+
+
     }
 
     public synchronized void refreshAdapter() {
@@ -283,12 +304,10 @@ public class MainFragment extends ListFragment {
                 }
             }
 
-            if (convertView != null) {
-                if (message.getType() == Message.IMAGE_MESSAGE || message.getMessage().matches(".*amazonaws.*")) {
-                    loadImageCell(message, convertView);
-                } else {
-                    loadTextCell(message, convertView);
-                }
+            if (message.getType() == Message.IMAGE_MESSAGE || message.getMessage().matches(".*amazonaws.*")) {
+                loadImageCell(message, convertView);
+            } else {
+                loadTextCell(message, convertView);
             }
 
             return convertView;
@@ -323,33 +342,38 @@ public class MainFragment extends ListFragment {
                 final ImageView imageView = (ImageView) view.findViewById(R.id.image_img);
                 TextView messageTimeView = (TextView) view.findViewById(R.id.message_time_img);
                 loadBaseCell(message, authorView, messageTimeView);
-                try {
-                    if (DatabaseHelper.getInstance(context).getImagesDao().queryForId(message.getMessageID()) != null) {
-                        ImageMessage img = DatabaseHelper.getInstance(context).getImagesDao().queryForId(message.getMessageID());
-                        Bitmap b = BitmapFactory.decodeFile(img.getURI());
-                        imageView.setImageBitmap(b);
-                    } else {
-                        ImagesHelper.getInstance(context).saveImage(message, new SimpleListener() {
-                            @Override
-                            public void onSuccess() {
-                                try {
-                                    ImageMessage img = DatabaseHelper.getInstance(context).getImagesDao().queryForId(message.getMessageID());
-                                    Bitmap b = BitmapFactory.decodeFile(img.getURI());
-                                    imageView.setImageBitmap(b);
-                                } catch (SQLException e) {
-                                    e.printStackTrace();
-                                }
-                            }
 
-                            @Override
-                            public void onError() {
-                            }
-                        });
-                    }
-                } catch (SQLException e) {
+                imageView.setImageBitmap(null);
+                try {
+                    ImagesHelper imgHelper = ImagesHelper.getInstance(context);
+                    imgHelper.retrieveImageThumb(message, new ImageListener() {
+                        @Override
+                        public void onSuccess(Bitmap b) {
+                            imageView.setImageBitmap(b);
+                            imageView.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    getFragmentManager()
+                                        .beginTransaction()
+                                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                                        .add(R.id.container, ImageFragment.getInstance(context))
+                                        .addToBackStack(null)
+                                        .commit();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onSuccess() { // Don't use!
+                        }
+
+                        @Override
+                        public void onError() {
+                        }
+                    });
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
-
             }
         }
 

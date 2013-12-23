@@ -29,10 +29,6 @@ public class ImageMessage {
     private String URL;
     @DatabaseField(canBeNull = false)
     private String URI;
-    @DatabaseField(canBeNull = false)
-    private int width;
-    @DatabaseField(canBeNull = false)
-    private int height;
 
     public ImageMessage() {
     }
@@ -41,31 +37,12 @@ public class ImageMessage {
      * @param messageID message id
      * @param url       remote url
      * @param uri       local uri (gallery)
-     * @param width     image with
-     * @param height    image height
      */
-    public ImageMessage(String messageID, String url, String uri, int width, int height) {
+    public ImageMessage(String messageID, String url, String uri) {
         this.messageID = messageID;
         this.URL = url;
         this.URI = uri;
-        this.width = width;
-        this.height = height;
-    }
 
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
     }
 
     public String getURI() {

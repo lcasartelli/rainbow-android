@@ -45,6 +45,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,6 +87,7 @@ public class RainbowHelper {
 
             // Try PUBNUB
             pubNub();
+            uploadImage();
 
         } else {
             Log.e(TAG, "Context null");
@@ -208,7 +212,6 @@ public class RainbowHelper {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 String s = new String(responseBody);
-                Log.d(TAG, s);
                 if (loginListener != null) {
                     try {
                         JSONObject resp = new JSONObject(s);
@@ -277,6 +280,7 @@ public class RainbowHelper {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 String s = new String(responseBody);
+
                 List<Message> messages = null;
                 try {
                     JSONObject resp = new JSONObject(s);
@@ -371,9 +375,42 @@ public class RainbowHelper {
         long timestamp = json.getLong("timestamp");
         String _id = from + "-" + timestamp;
         Date date = new Date(timestamp);
-        char type = json.getString("message_t").charAt(0);
+        char type;
+        try {
+            type = json.getString("message_t").charAt(0);
+        } catch (JSONException e) {
+            type = Message.TEXT_MESSAGE;
+        }
         message = new Message(_id, from, messageContent, date, enc, false, type);
         return message;
+    }
+
+    private void downloadAttachment(Message msg) {
+        new AsyncTask<Message, Integer, String>() {
+            @Override
+            protected String doInBackground(Message... messages) {
+                for (Message message : messages) {
+                    try {
+                        ImagesHelper.getInstance(context).retrieveImage(message, new SimpleListener() {
+                            @Override
+                            public void onSuccess() {
+                                Log.d(TAG, "Download complete");
+                            }
+
+                            @Override
+                            public void onError() {
+
+                            }
+                        });
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return null;
+            }
+        }.execute(msg);
     }
 
     /**
@@ -383,28 +420,34 @@ public class RainbowHelper {
     private List<Message> parseMessages(JSONObject data) {
         List<Message> messages = new ArrayList<Message>();
         // Parse messages
+        JSONArray jsonMessages;
         try {
-            JSONArray jsonMessages = data.getJSONArray("messages");
-
-            for (int i = 0; i < jsonMessages.length(); ++i) {
-                JSONObject msg = jsonMessages.getJSONObject(i);
-                Message message = getMessage(msg);
-                try {
-                    // Storing message
-                    if (!this.dao.idExists((message.getMessageID()))) {
-                        this.dao.create(message);
-                    } else {
-                        Log.i(TAG, "Message already exists: " + message.toString());
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-                messages.add(message);
-            }
-
+            jsonMessages = data.getJSONArray("messages");
         } catch (JSONException e) {
             e.printStackTrace();
+            jsonMessages = new JSONArray();
         }
+
+        for (int i = 0; i < jsonMessages.length(); ++i) {
+            try {
+                JSONObject msg = jsonMessages.getJSONObject(i);
+                Message message = getMessage(msg);
+                // Storing message
+                if (!this.dao.idExists((message.getMessageID()))) {
+                    this.dao.create(message);
+                } else {
+                    Log.i(TAG, "Message already exists: " + message.toString());
+                }
+
+                downloadAttachment(message);
+                messages.add(message);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
         // Sort by timestamp
         Comparator<Message> comparator = new Comparator<Message>() {
             public int compare(Message c1, Message c2) {
@@ -500,6 +543,72 @@ public class RainbowHelper {
         params.put("message_t", "t");
 
         String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.messages_url);
+        client.post(url, params, responseHandler);
+    }
+
+    public void uploadImage() {
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader("Accept", "application/json");
+        RequestParams params = new RequestParams();
+
+        AsyncHttpResponseHandler responseHandler = new AsyncHttpResponseHandler() {
+            @Override
+            public void onStart() {
+                Log.d(TAG, "Start sending message...");
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                if (responseBody != null) {
+                    Log.i(TAG, new String(responseBody));
+                }
+
+                /*try {
+                    JSONObject json = new JSONObject(responseBody.toString());
+                    String url = json.getString("url");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }*/
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                Log.e(TAG, "Upload file error: " + statusCode);
+                //TODO: onFailure upload
+            }
+
+            @Override
+            public void onRetry() {
+                Log.d(TAG, "retry");
+            }
+
+            @Override
+            public void onProgress(int bytesWritten, int totalSize) {
+                // Progress notification
+            }
+
+            @Override
+            public void onFinish() {
+                Log.d(TAG, "Finish upload request");
+            }
+        };
+
+        File file = null;
+        if (context.getCacheDir() != null) {
+            file = new File(context.getCacheDir(), "Rainbow").listFiles()[1];
+        }
+
+        try {
+            params.put("token", this.token);
+            params.put("from", "luca");
+            params.put("did", "" + this.UUID);
+            params.put("filename", "test.jpeg");
+            params.put("upload", file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.attachment_url);
         client.post(url, params, responseHandler);
     }
 }

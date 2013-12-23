@@ -93,16 +93,17 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="android-async-http-1.4.4" level="project" />
     <orderEntry type="library" exported="" name="ormlite-android-4.47" level="project" />
+    <orderEntry type="library" exported="" name="android-smart-image-view-1.0.0" level="project" />
+    <orderEntry type="library" exported="" name="support-v4-19.0.0" level="project" />
+    <orderEntry type="library" exported="" name="commons-io-2.4" level="project" />
+    <orderEntry type="library" exported="" name="ormlite-jdbc-4.47" level="project" />
     <orderEntry type="library" exported="" name="ormlite-core-4.47" level="project" />
     <orderEntry type="library" exported="" name="TestFlightLib" level="project" />
-    <orderEntry type="library" exported="" name="support-v4-19.0.0" level="project" />
     <orderEntry type="library" exported="" name="support-v13-19.0.0" level="project" />
     <orderEntry type="library" exported="" name="Pubnub-Android-3.5.6" level="project" />
-    <orderEntry type="library" exported="" name="commons-io-2.4" level="project" />
     <orderEntry type="library" exported="" name="bcprov-jdk15on-1.47" level="project" />
-    <orderEntry type="library" exported="" name="universal-image-loader-1.9.0" level="project" />
     <orderEntry type="library" exported="" name="commons-lang3-3.1" level="project" />
-    <orderEntry type="library" exported="" name="ormlite-jdbc-4.47" level="project" />
+    <orderEntry type="library" exported="" name="universal-image-loader-1.9.0" level="project" />
   </component>
 </module>
 

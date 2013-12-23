@@ -129,4 +129,8 @@ public class Message {
             ", isEncrypted=" + isEncrypted +
             '}';
     }
+
+    public Message clone() throws CloneNotSupportedException {
+        return (Message) super.clone();
+    }
 }

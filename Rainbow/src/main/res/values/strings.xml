@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2013 Luca Casartelli luca@plasticpanda.com, Plastic Panda
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
 <resources>
 
     <!-- App -->
@@ -9,6 +26,7 @@
     <string name="rainbow_base_url">http://fast.plasticpanda.com:23002</string>
     <string name="login_url">/login</string>
     <string name="messages_url">/chat</string>
+    <string name="attachment_url">/attachment/simple</string>
 
     <!-- PUBNUB Credentials -->
     <string name="PN_publishKey">pub-c-4ead5767-2d9a-4297-abf6-05c68fe0e28f</string>
