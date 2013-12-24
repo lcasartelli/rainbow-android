@@ -19,6 +19,7 @@ package com.plasticpanda.rainbow.ui;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +27,8 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import com.plasticpanda.rainbow.R;
+import com.plasticpanda.rainbow.core.ImagesHelper;
+import com.plasticpanda.rainbow.db.Message;
 
 
 public class ImageFragment extends Fragment {
@@ -35,7 +38,10 @@ public class ImageFragment extends Fragment {
 
     private Activity context;
 
-    private ImageFragment(Activity context) {
+    private Message message;
+
+    public ImageFragment(Activity context) {
+        super();
         this.context = context;
     }
 
@@ -44,6 +50,10 @@ public class ImageFragment extends Fragment {
             sharedInstance = new ImageFragment(context);
         }
         return sharedInstance;
+    }
+
+    public void setMessage(Message msg) {
+        this.message = msg;
     }
 
     @Override
@@ -55,6 +65,18 @@ public class ImageFragment extends Fragment {
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         context.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        Bitmap bmp = ImagesHelper.getInstance(context).getImage(message);
+        TouchImageView imgView = (TouchImageView) view.findViewById(R.id.full_screen_img);
+        imgView.maintainZoomAfterSetImage(false);
+        imgView.setImageBitmap(bmp);
+        imgView.maintainZoomAfterSetImage(false);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        context.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
     }
 }
 

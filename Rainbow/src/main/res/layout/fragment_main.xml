@@ -21,10 +21,10 @@
                 android:layout_height="fill_parent"
                 tools:context="com.plasticpanda.rainbow.core.MainActivity$PlaceholderFragment">
 
-<ImageView
+    <ImageView
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:contentDescription="background"
+            android:contentDescription="@string/background_image_description"
             android:src="@drawable/bk"
             android:adjustViewBounds="false"
             android:cropToPadding="false"
@@ -42,7 +42,8 @@
             android:stackFromBottom="true"
             android:transcriptMode="normal"
             android:dividerHeight="3dp"
-            android:drawSelectorOnTop="false"/>
+            android:drawSelectorOnTop="false"
+            android:animateLayoutChanges="true"/>
 
 
     <LinearLayout
@@ -60,9 +61,9 @@
             >
 
         <ImageView
-                android:layout_width="35dp"
-                android:layout_height="35dp"
-                android:contentDescription="attachment"
+                android:layout_width="35sp"
+                android:layout_height="35sp"
+                android:contentDescription="@string/attachment_image_description"
                 android:id="@+id/imageView"
                 android:src="@drawable/attachment"/>
 
@@ -72,8 +73,8 @@
                 android:layout_weight="0.13"/>
 
         <EditText
-                android:layout_width="251dp"
-                android:layout_height="32dp"
+                android:layout_width="251sp"
+                android:layout_height="32sp"
                 android:id="@+id/editText"
                 android:hint="@string/message_label"
                 android:background="#ffffff"
@@ -87,9 +88,16 @@
                 android:textCursorDrawable="@null"
                 android:imeOptions="actionSend"
                 android:layout_gravity="center"
-                android:paddingStart="5dp"
-                android:textSize="17dp"/>
+                android:paddingStart="5sp"
+                android:textSize="17sp"/>
 
     </LinearLayout>
+
+    <com.plasticpanda.rainbow.ui.TouchImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/full_screen_img"
+            android:layout_gravity="center_horizontal"
+            android:visibility="invisible"/>
 
 </RelativeLayout>

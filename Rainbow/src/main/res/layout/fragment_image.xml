@@ -20,12 +20,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:layout_height="match_parent"
+              android:clickable="true">
 
-    <com.loopj.android.image.SmartImageView
+    <!--<com.loopj.android.image.SmartImageView-->
+    <com.plasticpanda.rainbow.ui.TouchImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/imageView"
+            android:id="@+id/full_screen_img"
             android:layout_gravity="center_horizontal"
             android:src="@drawable/bk"
             android:background="#D9000000"/>

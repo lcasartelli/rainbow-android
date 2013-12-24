@@ -42,7 +42,7 @@ public class LoginFragment extends Fragment {
     private static LoginFragment sharedInstance;
 
     private LoginFragment() {
-
+        super();
     }
 
     public static synchronized LoginFragment getInstance() {
@@ -70,7 +70,6 @@ public class LoginFragment extends Fragment {
                     TextView userTextView = (TextView) view.findViewById(R.id.user);
                     TextView codeTextView = (TextView) view.findViewById(R.id.code);
 
-                    // TODO: hide keyboard, find a better way
                     // Hide keyboard
                     InputMethodManager keyboard = (InputMethodManager) context.getSystemService(Service.INPUT_METHOD_SERVICE);
                     keyboard.hideSoftInputFromWindow(userTextView.getWindowToken(), 0);

@@ -33,8 +33,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     private static final String TAG = DatabaseHelper.class.getName();
 
-
-    private Dao<ImageMessage, String> imagesDao = null;
     private Dao<Message, String> messagesDao = null;
 
     private static DatabaseHelper sharedInstance;
@@ -58,7 +56,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void onCreate(SQLiteDatabase db, ConnectionSource connectionSource) {
         Log.i(TAG, "onCreate");
         try {
-            TableUtils.createTable(connectionSource, ImageMessage.class);
             TableUtils.createTable(connectionSource, Message.class);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -73,7 +70,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, ConnectionSource connectionSource, int oldVersion, int newVersion) {
         try {
             Log.i(DatabaseHelper.class.getName(), "onUpgrade");
-            TableUtils.dropTable(connectionSource, ImageMessage.class, true);
             TableUtils.dropTable(connectionSource, Message.class, true);
             onCreate(db, connectionSource);
         } catch (SQLException e) {
@@ -91,26 +87,5 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             messagesDao = getDao(Message.class);
         }
         return messagesDao;
-    }
-
-
-    /**
-     * Returns the Database Access Object (DAO) for our SimpleData class. It will create it or just give the cached
-     * value.
-     */
-    public Dao<ImageMessage, String> getImagesDao() throws SQLException {
-        if (imagesDao == null) {
-            imagesDao = getDao(ImageMessage.class);
-        }
-        return imagesDao;
-    }
-
-
-    /**
-     * Close the database connections and clear any cached DAOs.
-     */
-    @Override
-    public void close() {
-        super.close();
     }
 }

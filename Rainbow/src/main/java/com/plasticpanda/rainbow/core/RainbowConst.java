@@ -15,12 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.plasticpanda.rainbow.utils;
+package com.plasticpanda.rainbow.core;
 
-import android.graphics.Bitmap;
+class RainbowConst {
+    public static final String SHARED_PREFERENCES_NAME = "rainbow";
+    public static final String IMAGES_DIRECTORY = "Rainbow";
 
-
-public interface ImageListener extends SimpleListener {
-
-    public void onSuccess(Bitmap bitmap);
 }

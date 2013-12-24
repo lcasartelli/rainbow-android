@@ -17,18 +17,25 @@
 
 package com.plasticpanda.rainbow.ui;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.app.ListFragment;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
+import android.graphics.Color;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
@@ -44,12 +51,13 @@ import com.plasticpanda.rainbow.utils.ImageListener;
 import com.plasticpanda.rainbow.utils.MessagesListener;
 import com.plasticpanda.rainbow.utils.SimpleListener;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import static android.graphics.Color.parseColor;
 
 /**
  * @author Luca Casartelli
@@ -65,7 +73,8 @@ public class MainFragment extends ListFragment {
     private final List<Message> messages = new ArrayList<Message>();
     private Activity context;
 
-    private MainFragment() {
+    public MainFragment() {
+        super();
     }
 
     public static synchronized MainFragment getInstance() {
@@ -96,7 +105,7 @@ public class MainFragment extends ListFragment {
                     if (i == EditorInfo.IME_ACTION_SEND) {
                         sendMessage();
                     }
-                    return false;
+                    return true;
                 }
             });
         }
@@ -139,36 +148,33 @@ public class MainFragment extends ListFragment {
                 final String message = messageView.getText().toString();
 
                 messageView.setText("".toCharArray(), 0, 0);
-                new AsyncTask<String, Integer, String>() {
+
+
+                new Thread(new Runnable() {
                     @Override
-                    protected String doInBackground(String... messages) {
+                    public void run() {
+                        RainbowHelper.getInstance(context).sendMessage(message, new SimpleListener() {
+                            @Override
+                            public void onSuccess() {
+                                refreshAdapter();
+                            }
 
-                        for (String message1 : messages) {
-                            RainbowHelper.getInstance(context).sendMessage(message1, new SimpleListener() {
-                                @Override
-                                public void onSuccess() {
-                                    refreshAdapter();
-                                }
-
-                                @Override
-                                public void onError() {
-                                    context.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText(
-                                                context,
-                                                context.getString(R.string.send_message_error),
-                                                Toast.LENGTH_LONG)
-                                                .show();
-                                        }
-                                    });
-                                }
-                            });
-                        }
-
-                        return null;
+                            @Override
+                            public void onError() {
+                                context.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.send_message_error),
+                                            Toast.LENGTH_LONG)
+                                            .show();
+                                    }
+                                });
+                            }
+                        });
                     }
-                }.execute(message);
+                }).start();
             }
         }
     }
@@ -177,19 +183,13 @@ public class MainFragment extends ListFragment {
     void getMessages() {
         final RainbowHelper db = RainbowHelper.getInstance(this.context);
 
-        new AsyncTask<String, Integer, String>() {
-
+        new Thread(new Runnable() {
             @Override
-            protected String doInBackground(String... strings) {
+            public void run() {
                 db.getMessages(new MessagesListener() {
                     @Override
                     public void onSuccess(List<Message> messages) {
-                        context.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                refreshAdapter();
-                            }
-                        });
+                        refreshAdapter();
                     }
 
                     @Override
@@ -211,18 +211,14 @@ public class MainFragment extends ListFragment {
                         });
                     }
                 });
-                return null;
             }
-        }.execute("0");
-
-
+        }).start();
     }
 
     public synchronized void refreshAdapter() {
-        new AsyncTask<String, Integer, String>() {
-
+        new Thread(new Runnable() {
             @Override
-            protected String doInBackground(String... strings) {
+            public void run() {
                 try {
                     List<Message> data = RainbowHelper.getInstance(context).getMessageFromDb();
                     List<Message> compressed = RainbowHelper.compressMessages(data);
@@ -240,9 +236,8 @@ public class MainFragment extends ListFragment {
                     e.printStackTrace();
                 }
 
-                return null;
             }
-        }.execute();
+        }).start();
     }
 
 
@@ -330,8 +325,6 @@ public class MainFragment extends ListFragment {
         }
 
         private void loadImageCell(final Message message, View view) {
-            // TODO: load image
-
             if ((view != null) &&
                 (view.findViewById(R.id.author_img) != null) &&
                 (view.findViewById(R.id.image_img) != null) &&
@@ -344,36 +337,40 @@ public class MainFragment extends ListFragment {
                 loadBaseCell(message, authorView, messageTimeView);
 
                 imageView.setImageBitmap(null);
-                try {
-                    ImagesHelper imgHelper = ImagesHelper.getInstance(context);
-                    imgHelper.retrieveImageThumb(message, new ImageListener() {
-                        @Override
-                        public void onSuccess(Bitmap b) {
-                            imageView.setImageBitmap(b);
-                            imageView.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
+
+                ImagesHelper imgHelper = ImagesHelper.getInstance(context);
+                imgHelper.retrieveImageThumb(message, new ImageListener() {
+                    @Override
+                    public void onSuccess(Bitmap b) {
+                        imageView.setImageBitmap(b);
+                        imageView.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+
+                                ImageFragment frag = new ImageFragment(context);
+                                frag.setMessage(message);
+
+                                zoomImageFromThumb(imageView, message);
+
+                                /*if (getFragmentManager() != null) {
                                     getFragmentManager()
                                         .beginTransaction()
-                                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-                                        .add(R.id.container, ImageFragment.getInstance(context))
+                                        .setTransition(FragmentTransaction.TRANSIT_ENTER_MASK)
+                                        .add(R.id.container, frag)
                                         .addToBackStack(null)
                                         .commit();
-                                }
-                            });
-                        }
+                                }*/
+                            }
+                        });
+                    }
 
-                        @Override
-                        public void onSuccess() { // Don't use!
-                        }
+                    @Override
+                    public void onSuccess() { /* Don't use! */ }
 
-                        @Override
-                        public void onError() {
-                        }
-                    });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                    @Override
+                    public void onError() {
+                    }
+                });
             }
         }
 
@@ -384,6 +381,156 @@ public class MainFragment extends ListFragment {
             SimpleDateFormat format = new SimpleDateFormat(getDateFormat(message.getDate()));
             String date = format.format(message.getDate());
             messageTimeView.setText(date);
+        }
+
+        private Animator mCurrentAnimator;
+
+        private void zoomImageFromThumb(final View thumbView, Message message) {
+            // If there's an animation in progress, cancel it
+            // immediately and proceed with this one.
+            if (mCurrentAnimator != null) {
+                mCurrentAnimator.cancel();
+            }
+
+            // Load the high-resolution "zoomed-in" image.
+            final ImageView expandedImageView = (ImageView) context.findViewById(
+                R.id.full_screen_img);
+            expandedImageView.setImageBitmap(ImagesHelper.getInstance(context).getImage(message));
+
+            // Calculate the starting and ending bounds for the zoomed-in image.
+            // This step involves lots of math. Yay, math.
+            final Rect startBounds = new Rect();
+            final Rect finalBounds = new Rect();
+            final Point globalOffset = new Point();
+
+            // The start bounds are the global visible rectangle of the thumbnail,
+            // and the final bounds are the global visible rectangle of the container
+            // view. Also set the container view's offset as the origin for the
+            // bounds, since that's the origin for the positioning animation
+            // properties (X, Y).
+            thumbView.getGlobalVisibleRect(startBounds);
+            context.findViewById(R.id.container)
+                .getGlobalVisibleRect(finalBounds, globalOffset);
+            startBounds.offset(-globalOffset.x, -globalOffset.y);
+            finalBounds.offset(-globalOffset.x, -globalOffset.y);
+
+            // Adjust the start bounds to be the same aspect ratio as the final
+            // bounds using the "center crop" technique. This prevents undesirable
+            // stretching during the animation. Also calculate the start scaling
+            // factor (the end scaling factor is always 1.0).
+            float startScale;
+            if ((float) finalBounds.width() / finalBounds.height()
+                > (float) startBounds.width() / startBounds.height()) {
+                // Extend start bounds horizontally
+                startScale = (float) startBounds.height() / finalBounds.height();
+                float startWidth = startScale * finalBounds.width();
+                float deltaWidth = (startWidth - startBounds.width()) / 2;
+                startBounds.left -= deltaWidth;
+                startBounds.right += deltaWidth;
+            } else {
+                // Extend start bounds vertically
+                startScale = (float) startBounds.width() / finalBounds.width();
+                float startHeight = startScale * finalBounds.height();
+                float deltaHeight = (startHeight - startBounds.height()) / 2;
+                startBounds.top -= deltaHeight;
+                startBounds.bottom += deltaHeight;
+            }
+
+            // Hide the thumbnail and show the zoomed-in view. When the animation
+            // begins, it will position the zoomed-in view in the place of the
+            // thumbnail.
+            thumbView.setAlpha(0f);
+            expandedImageView.setVisibility(View.VISIBLE);
+
+            // Set the pivot point for SCALE_X and SCALE_Y transformations
+            // to the top-left corner of the zoomed-in view (the default
+            // is the center of the view).
+            expandedImageView.setPivotX(0f);
+            expandedImageView.setPivotY(0f);
+
+            // Construct and run the parallel animation of the four translation and
+            // scale properties (X, Y, SCALE_X, and SCALE_Y).
+            AnimatorSet set = new AnimatorSet();
+            set
+                .play(ObjectAnimator.ofFloat(expandedImageView, View.X,
+                    startBounds.left, finalBounds.left))
+                .with(ObjectAnimator.ofFloat(expandedImageView, View.Y,
+                    startBounds.top, finalBounds.top))
+                .with(ObjectAnimator.ofFloat(expandedImageView, View.SCALE_X,
+                    startScale, 1f)).with(ObjectAnimator.ofFloat(expandedImageView,
+                View.SCALE_Y, startScale, 1f));
+            set.setDuration(getResources().getInteger(android.R.integer.config_mediumAnimTime));
+            set.setInterpolator(new DecelerateInterpolator());
+            set.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mCurrentAnimator = null;
+                    final ObjectAnimator backgroundColorAnimator = ObjectAnimator.ofObject(expandedImageView,
+                        "backgroundColor",
+                        new ArgbEvaluator(),
+                        Color.TRANSPARENT,
+                        parseColor("#D9000000"));
+                    backgroundColorAnimator.setDuration(getResources().getInteger(android.R.integer.config_mediumAnimTime));
+                    backgroundColorAnimator.start();
+                    //expandedImageView.setBackgroundColor(parseColor("#D9000000"));
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    mCurrentAnimator = null;
+                }
+            });
+            set.start();
+            mCurrentAnimator = set;
+
+            // Upon clicking the zoomed-in image, it should zoom back down
+            // to the original bounds and show the thumbnail instead of
+            // the expanded image.
+            final float startScaleFinal = startScale;
+            expandedImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (mCurrentAnimator != null) {
+                        mCurrentAnimator.cancel();
+                    }
+
+                    expandedImageView.setBackgroundColor(Color.TRANSPARENT);
+
+                    // Animate the four positioning/sizing properties in parallel,
+                    // back to their original values.
+                    AnimatorSet set = new AnimatorSet();
+                    set.play(ObjectAnimator
+                        .ofFloat(expandedImageView, View.X, startBounds.left))
+                        .with(ObjectAnimator
+                            .ofFloat(expandedImageView,
+                                View.Y, startBounds.top))
+                        .with(ObjectAnimator
+                            .ofFloat(expandedImageView,
+                                View.SCALE_X, startScaleFinal))
+                        .with(ObjectAnimator
+                            .ofFloat(expandedImageView,
+                                View.SCALE_Y, startScaleFinal));
+                    set.setDuration(getResources().getInteger(android.R.integer.config_mediumAnimTime));
+                    set.setInterpolator(new DecelerateInterpolator());
+                    set.addListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            thumbView.setAlpha(1f);
+                            expandedImageView.setVisibility(View.GONE);
+                            mCurrentAnimator = null;
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+                            thumbView.setAlpha(1f);
+                            expandedImageView.setVisibility(View.GONE);
+                            mCurrentAnimator = null;
+                        }
+                    });
+                    set.start();
+                    mCurrentAnimator = set;
+                }
+            });
         }
     }
 }

@@ -20,7 +20,6 @@ package com.plasticpanda.rainbow.core;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -45,9 +44,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,6 +63,21 @@ public class RainbowHelper {
     private String UUID;
     private Dao<Message, String> dao;
 
+    private static final String SHARED_TOKEN_KEY = "token";
+    private static final String SHARED_USER_KEY = "user";
+
+    private static final String JSON_FROM_KEY = "from";
+    private static final String JSON_USER_KEY = "username";
+    private static final String JSON_TOKEN_KEY = "token";
+    private static final String JSON_MESSAGE_KEY = "message";
+    private static final String JSON_TIMESTAMP_KEY = "timestamp";
+    private static final String JSON_TYPE_KEY = "message_t";
+    private static final String JSON_DID_KEY = "did";
+    private static final String JSON_ENCRYPTION_KEY = "enc";
+    private static final String JSON_LIMIT_KEY = "limit";
+    private static final String JSON_SINCE_KEY = "since";
+    private static final String JSON_MESSAGES_KEY = "messages";
+
     private static RainbowHelper sharedInstance;
 
     /**
@@ -76,9 +87,9 @@ public class RainbowHelper {
         this.context = context;
         if (this.context != null) {
             this.UUID = Settings.Secure.getString(this.context.getContentResolver(), Settings.Secure.ANDROID_ID);
-            this.sharedPreferences = this.context.getSharedPreferences("rainbow", Context.MODE_PRIVATE);
-            this.token = this.sharedPreferences.getString("token", null);
-            this.user = this.sharedPreferences.getString("user", null);
+            this.sharedPreferences = this.context.getSharedPreferences(RainbowConst.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+            this.token = this.sharedPreferences.getString(SHARED_TOKEN_KEY, null);
+            this.user = this.sharedPreferences.getString(SHARED_USER_KEY, null);
             try {
                 this.dao = DatabaseHelper.getInstance(this.context).getMessagesDao();
             } catch (SQLException e) {
@@ -87,7 +98,6 @@ public class RainbowHelper {
 
             // Try PUBNUB
             pubNub();
-            uploadImage();
 
         } else {
             Log.e(TAG, "Context null");
@@ -110,14 +120,14 @@ public class RainbowHelper {
 
     private void saveToken(String t) {
         this.sharedPreferences.edit()
-            .putString("token", t)
+            .putString(SHARED_TOKEN_KEY, t)
             .commit();
         this.token = t;
     }
 
     private void saveUser(String u) {
         this.sharedPreferences.edit()
-            .putString("user", u)
+            .putString(SHARED_USER_KEY, u)
             .commit();
         this.user = u;
     }
@@ -153,29 +163,25 @@ public class RainbowHelper {
 
                 @Override
                 public void successCallback(String channel, final Object data) {
-
-                    new AsyncTask<String, Integer, String>() {
+                    new Thread(new Runnable() {
                         @Override
-                        protected String doInBackground(String... jsonObjects) {
-                            for (String jsonObject : jsonObjects) {
-                                try {
-                                    JSONObject obj = new JSONObject(jsonObject);
-                                    if (obj.getString("from").compareTo(user) != 0) {
-                                        Message msg = getMessage(obj);
-                                        dao.create(msg);
-                                        MainFragment.getInstance().refreshAdapter();
-                                    } else {
-                                        Log.d(TAG, "Message from current user");
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                } catch (SQLException e) {
-                                    e.printStackTrace();
-                                }
+                        public void run() {
+                            try {
+                                JSONObject obj = new JSONObject(data.toString());
+                                //if (obj.getString(JSON_FROM_KEY).compareTo(user) != 0) {
+                                Message msg = getMessage(obj);
+                                dao.create(msg);
+                                MainFragment.getInstance().refreshAdapter();
+                                //} else {
+                                //    Log.d(TAG, "Message from current user");
+                                //}
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            } catch (SQLException e) {
+                                e.printStackTrace();
                             }
-                            return null;
                         }
-                    }.execute(data.toString());
+                    }).start();
                 }
 
                 @Override
@@ -215,7 +221,7 @@ public class RainbowHelper {
                 if (loginListener != null) {
                     try {
                         JSONObject resp = new JSONObject(s);
-                        String serverToken = resp.getString("token");
+                        String serverToken = resp.getString(JSON_TOKEN_KEY);
                         saveToken(serverToken);
                         saveUser(user);
                         loginListener.onSuccess();
@@ -252,9 +258,9 @@ public class RainbowHelper {
 
         if (username != null && code != null) {
 
-            params.put("username", username);
-            params.put("token", code);
-            params.put("did", this.UUID);
+            params.put(JSON_USER_KEY, username);
+            params.put(JSON_TOKEN_KEY, code);
+            params.put(JSON_DID_KEY, this.UUID);
             this.user = username;
 
             String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.login_url);
@@ -320,11 +326,11 @@ public class RainbowHelper {
         };
 
         String limit = "500";
-        params.put("token", this.token);
-        params.put("since", "0");
-        params.put("from", this.user);
-        params.put("did", "" + this.UUID);
-        params.put("limit", limit);
+        params.put(JSON_TOKEN_KEY, this.token);
+        params.put(JSON_SINCE_KEY, "0");
+        params.put(JSON_FROM_KEY, this.user);
+        params.put(JSON_DID_KEY, "" + this.UUID);
+        params.put(JSON_LIMIT_KEY, limit);
 
         String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.messages_url);
         client.get(url, params, responseHandler);
@@ -369,15 +375,15 @@ public class RainbowHelper {
 
     private static Message getMessage(JSONObject json) throws JSONException {
         Message message;
-        String from = json.getString("from");
-        boolean enc = json.getBoolean("enc");
-        String messageContent = json.getString("message");
-        long timestamp = json.getLong("timestamp");
+        String from = json.getString(JSON_FROM_KEY);
+        boolean enc = json.getBoolean(JSON_ENCRYPTION_KEY);
+        String messageContent = json.getString(JSON_MESSAGE_KEY);
+        long timestamp = json.getLong(JSON_TIMESTAMP_KEY);
         String _id = from + "-" + timestamp;
         Date date = new Date(timestamp);
         char type;
         try {
-            type = json.getString("message_t").charAt(0);
+            type = json.getString(JSON_TYPE_KEY).charAt(0);
         } catch (JSONException e) {
             type = Message.TEXT_MESSAGE;
         }
@@ -386,31 +392,7 @@ public class RainbowHelper {
     }
 
     private void downloadAttachment(Message msg) {
-        new AsyncTask<Message, Integer, String>() {
-            @Override
-            protected String doInBackground(Message... messages) {
-                for (Message message : messages) {
-                    try {
-                        ImagesHelper.getInstance(context).retrieveImage(message, new SimpleListener() {
-                            @Override
-                            public void onSuccess() {
-                                Log.d(TAG, "Download complete");
-                            }
-
-                            @Override
-                            public void onError() {
-
-                            }
-                        });
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-                return null;
-            }
-        }.execute(msg);
+        ImagesHelper.getInstance(context).retrieveImage(msg);
     }
 
     /**
@@ -422,7 +404,7 @@ public class RainbowHelper {
         // Parse messages
         JSONArray jsonMessages;
         try {
-            jsonMessages = data.getJSONArray("messages");
+            jsonMessages = data.getJSONArray(JSON_MESSAGES_KEY);
         } catch (JSONException e) {
             e.printStackTrace();
             jsonMessages = new JSONArray();
@@ -439,7 +421,19 @@ public class RainbowHelper {
                     Log.i(TAG, "Message already exists: " + message.toString());
                 }
 
-                downloadAttachment(message);
+                String msg_decrypted;
+                if (message.isEncrypted()) {
+                    msg_decrypted = SecurityUtils.decrypt(message.getMessage());
+                } else {
+                    msg_decrypted = message.getMessage();
+                }
+
+                // download attachment
+                if (message.getType() == Message.IMAGE_MESSAGE || msg_decrypted.matches(".*amazonaws.*")) {
+                    Log.d(TAG, "download attachment");
+                    downloadAttachment(message);
+                }
+
                 messages.add(message);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -521,32 +515,31 @@ public class RainbowHelper {
         final Message msg = new Message(messageID, this.user, cryptedMessage, new Date(), true, true);
 
         // Storing message
-        new AsyncTask<Message, Integer, String>() {
+        new Thread(new Runnable() {
             @Override
-            protected String doInBackground(Message... messages) {
+            public void run() {
                 try {
                     DatabaseHelper.getInstance(context).getMessagesDao().create(msg);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                return null;
             }
-        }.execute(msg);
+        }).start();
 
-        params.put("token", this.token);
-        params.put("from", msg.getAuthor());
-        params.put("did", "" + this.UUID);
-        params.put("timestamp", timestamp);
-        params.put("message", msg.getMessage());
-        params.put("enc", "1");
+        params.put(JSON_TOKEN_KEY, this.token);
+        params.put(JSON_FROM_KEY, msg.getAuthor());
+        params.put(JSON_DID_KEY, "" + this.UUID);
+        params.put(JSON_TIMESTAMP_KEY, timestamp);
+        params.put(JSON_MESSAGE_KEY, msg.getMessage());
+        params.put(JSON_ENCRYPTION_KEY, "1");
         // DEBUG
-        params.put("message_t", "t");
+        params.put(JSON_TYPE_KEY, "" + Message.TEXT_MESSAGE);
 
         String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.messages_url);
         client.post(url, params, responseHandler);
     }
 
-    public void uploadImage() {
+    /*public void uploadImage() {
         AsyncHttpClient client = new AsyncHttpClient();
         client.addHeader("Accept", "application/json");
         RequestParams params = new RequestParams();
@@ -563,12 +556,12 @@ public class RainbowHelper {
                     Log.i(TAG, new String(responseBody));
                 }
 
-                /*try {
+                try {
                     JSONObject json = new JSONObject(responseBody.toString());
                     String url = json.getString("url");
                 } catch (JSONException e) {
                     e.printStackTrace();
-                }*/
+                }
             }
 
             @Override
@@ -600,7 +593,7 @@ public class RainbowHelper {
 
         try {
             params.put("token", this.token);
-            params.put("from", "luca");
+            params.put(JSON_FROM_KEY, "luca");
             params.put("did", "" + this.UUID);
             params.put("filename", "test.jpeg");
             params.put("upload", file);
@@ -610,5 +603,5 @@ public class RainbowHelper {
 
         String url = this.context.getString(R.string.rainbow_base_url) + this.context.getString(R.string.attachment_url);
         client.post(url, params, responseHandler);
-    }
+    }*/
 }

@@ -32,6 +32,10 @@ import com.plasticpanda.rainbow.ui.MainFragment;
 
 public class MainActivity extends Activity {
 
+    public MainActivity() {
+        super();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

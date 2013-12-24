@@ -50,20 +50,21 @@
             android:textColor="#ffffff"
             android:typeface="sans"
             android:textStyle="bold"
-            android:textSize="13dp"/>
+            android:textSize="13sp"/>
 
     <ImageView
             android:id="@+id/image_img"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:layout_below="@id/author_img"
+            android:contentDescription="@string/attachment_image_description"
             android:textColor="#ffffff"
-            android:maxHeight="200dp"
-            android:minHeight="200dp"
-            android:layout_marginTop="5dip"
+            android:maxHeight="200sp"
+            android:minHeight="200sp"
+            android:layout_marginTop="5sp"
             android:layout_toRightOf="@+id/author_image_img"
-            android:layout_marginRight="5dp"
-            android:textSize="15dp"
+            android:layout_marginRight="5sp"
+            android:textSize="15sp"
             android:cropToPadding="false"
             android:scaleType="fitCenter"/>
 
@@ -75,7 +76,7 @@
             android:layout_alignTop="@id/author_img"
             android:gravity="right"
             android:layout_marginRight="5dip"
-            android:textSize="11dip"
+            android:textSize="11sp"
             android:textColor="#ffffff"
             android:textStyle="bold"
             android:singleLine="false"/>

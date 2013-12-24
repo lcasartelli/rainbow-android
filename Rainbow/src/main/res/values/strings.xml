@@ -27,6 +27,7 @@
     <string name="login_url">/login</string>
     <string name="messages_url">/chat</string>
     <string name="attachment_url">/attachment/simple</string>
+    <string name="images_resize_url">http://re.size.li/1/c/426x222/</string>
 
     <!-- PUBNUB Credentials -->
     <string name="PN_publishKey">pub-c-4ead5767-2d9a-4297-abf6-05c68fe0e28f</string>

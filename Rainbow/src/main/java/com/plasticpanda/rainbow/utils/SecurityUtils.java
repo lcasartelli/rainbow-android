@@ -35,7 +35,7 @@ public class SecurityUtils {
      * @return decrypted text
      */
     public static String decrypt(String cipherText) {
-        String decryptedText = null;
+        String decryptedText;
         try {
             byte[] encryptedData = Base64.decode(cipherText, Base64.DEFAULT);
             byte[] _decryptedData = OpenSSL.decrypt(AES_ALGORITHM, SECRET_KEY, encryptedData);
@@ -54,7 +54,7 @@ public class SecurityUtils {
     }
 
     public static String encrypt(String text) {
-        String encrypted = null;
+        String encrypted;
         try {
             byte[] encryptedData = OpenSSL.encrypt(AES_ALGORITHM, SECRET_KEY, text.getBytes("UTF8"), false);
             encrypted = Base64.encodeToString(encryptedData, Base64.DEFAULT);
