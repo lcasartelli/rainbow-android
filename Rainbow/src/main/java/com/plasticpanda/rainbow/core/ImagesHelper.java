@@ -19,11 +19,9 @@ package com.plasticpanda.rainbow.core;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
@@ -165,10 +163,10 @@ public class ImagesHelper {
                         e.printStackTrace();
                     }
                     // emit broadcast
-                    context.sendBroadcast(new Intent(
+                    /*context.sendBroadcast(new Intent(
                         Intent.ACTION_MEDIA_MOUNTED,
                         Uri.parse("file://" + Environment.getExternalStorageDirectory())
-                    ));
+                    ));*/
 
                     Log.i(TAG, "download attachment done, message: " + messageDecrypted.toString());
                 } else {

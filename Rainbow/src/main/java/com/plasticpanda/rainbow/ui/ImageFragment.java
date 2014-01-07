@@ -33,7 +33,6 @@ import com.plasticpanda.rainbow.db.Message;
 
 public class ImageFragment extends Fragment {
 
-    private static final String TAG = LoginFragment.class.getName();
     private static ImageFragment sharedInstance;
 
     private Activity context;
@@ -79,4 +78,3 @@ public class ImageFragment extends Fragment {
         context.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
     }
 }
-

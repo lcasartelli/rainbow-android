@@ -28,19 +28,24 @@ import android.view.Menu;
 import com.plasticpanda.rainbow.R;
 import com.plasticpanda.rainbow.ui.LoginFragment;
 import com.plasticpanda.rainbow.ui.MainFragment;
+import com.plasticpanda.rainbow.utils.BackListener;
 
 
 public class MainActivity extends Activity {
 
+    private boolean defaultBackAction;
+    private BackListener backListener;
+
     public MainActivity() {
         super();
+        this.defaultBackAction = true;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        SharedPreferences sharedPreferences = getSharedPreferences("rainbow", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getSharedPreferences(RainbowConst.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
         String token = sharedPreferences.getString("token", null);
         Fragment fragment;
         if (token != null) {
@@ -62,5 +67,22 @@ public class MainActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    public void setBackListener(BackListener backListener) {
+        this.backListener = backListener;
+    }
+
+    public void setDefaultBackAction(boolean defaultBackAction) {
+        this.defaultBackAction = defaultBackAction;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (defaultBackAction) {
+            super.onBackPressed();
+        } else {
+            backListener.goBack();
+        }
     }
 }

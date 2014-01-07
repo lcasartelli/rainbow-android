@@ -357,8 +357,8 @@ public class RainbowHelper {
             if (i > 0 &&
                 (data.get(data.size() - 1).getAuthor().compareTo(queue.get(i).getAuthor()) == 0) &&
                 !(
-                    data.get(data.size() - 1).getMessage().matches(".*amazonaws.*") ||
-                        queue.get(i).getMessage().matches(".*amazonaws.*")
+                    data.get(data.size() - 1).getMessage().matches("^(http|https)(://).+(.png|.jpeg|.jpg)(/)*$") ||
+                        queue.get(i).getMessage().matches("^(http|https)(://).+(.png|.jpeg|.jpg)(/)*$")
                 )) {
                 Message last = data.get(data.size() - 1);
                 String messageContent = concatMessageContent(last, queue.get(i));
@@ -429,7 +429,7 @@ public class RainbowHelper {
                 }
 
                 // download attachment
-                if (message.getType() == Message.IMAGE_MESSAGE || msg_decrypted.matches(".*amazonaws.*")) {
+                if (message.getType() == Message.IMAGE_MESSAGE || msg_decrypted.matches("^(http|https)(://).+(.png|.jpeg|.jpg)(/)*$")) {
                     Log.d(TAG, "download attachment");
                     downloadAttachment(message);
                 }
