@@ -23,7 +23,7 @@
     <string name="testflight_token">"96e418ca-dc5e-4ed3-b94e-24399b7c945b"</string>
 
     <!-- URLs -->
-    <string name="rainbow_base_url">http://fast.plasticpanda.com:23002</string>
+    <string name="rainbow_base_url">http://10.0.10.23:3002</string>
     <string name="login_url">/login</string>
     <string name="messages_url">/chat</string>
     <string name="attachment_url">/attachment/simple</string>

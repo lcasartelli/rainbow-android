@@ -72,6 +72,8 @@ public class RainbowService extends Service {
                 .setContentText("Hello! :)");
 
         Intent resultIntent = new Intent(this, MainActivity.class);
+        resultIntent.setAction(Intent.ACTION_MAIN);
+        resultIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(resultIntent);
