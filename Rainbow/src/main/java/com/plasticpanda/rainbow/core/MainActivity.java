@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
@@ -35,6 +36,7 @@ public class MainActivity extends Activity {
 
     private boolean defaultBackAction;
     private BackListener backListener;
+
 
     public MainActivity() {
         super();
@@ -61,6 +63,8 @@ public class MainActivity extends Activity {
                 .add(R.id.container, fragment)
                 .commit();
         }
+
+        startService(new Intent(this, RainbowService.class));
     }
 
     @Override
@@ -84,5 +88,23 @@ public class MainActivity extends Activity {
         } else {
             backListener.goBack();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        RainbowApp.activityPaused();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        RainbowApp.activityResumed();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        RainbowApp.activityPaused();
     }
 }

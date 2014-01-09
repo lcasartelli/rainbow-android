@@ -17,7 +17,6 @@
 
 package com.plasticpanda.rainbow.core;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.provider.Settings;
@@ -30,8 +29,8 @@ import com.loopj.android.http.RequestParams;
 import com.plasticpanda.rainbow.R;
 import com.plasticpanda.rainbow.db.DatabaseHelper;
 import com.plasticpanda.rainbow.db.Message;
-import com.plasticpanda.rainbow.ui.MainFragment;
 import com.plasticpanda.rainbow.utils.MessagesListener;
+import com.plasticpanda.rainbow.utils.PNListener;
 import com.plasticpanda.rainbow.utils.SecurityUtils;
 import com.plasticpanda.rainbow.utils.SimpleListener;
 import com.pubnub.api.Callback;
@@ -56,7 +55,7 @@ public class RainbowHelper {
 
     private static final String TAG = RainbowHelper.class.getName();
 
-    private Activity context;
+    private Context context;
     private SharedPreferences sharedPreferences;
     private String token;
     private String user;
@@ -83,7 +82,7 @@ public class RainbowHelper {
     /**
      * @param context application context
      */
-    private RainbowHelper(Activity context) {
+    private RainbowHelper(Context context) {
         this.context = context;
         if (this.context != null) {
             this.UUID = Settings.Secure.getString(this.context.getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -96,8 +95,7 @@ public class RainbowHelper {
                 e.printStackTrace();
             }
 
-            // Try PUBNUB
-            pubNub();
+            //pubNub();
 
         } else {
             Log.e(TAG, "Context null");
@@ -111,7 +109,7 @@ public class RainbowHelper {
      * @param context application context
      * @return instance
      */
-    public synchronized static RainbowHelper getInstance(Activity context) {
+    public synchronized static RainbowHelper getInstance(Context context) {
         if (sharedInstance == null) {
             sharedInstance = new RainbowHelper(context);
         }
@@ -132,7 +130,7 @@ public class RainbowHelper {
         this.user = u;
     }
 
-    private void pubNub() {
+    public void pubNub(final PNListener listener) {
         Pubnub pn = new Pubnub(
             this.context.getString(R.string.PN_publishKey),
             this.context.getString(R.string.PN_subscribeKey)
@@ -168,13 +166,10 @@ public class RainbowHelper {
                         public void run() {
                             try {
                                 JSONObject obj = new JSONObject(data.toString());
-                                //if (obj.getString(JSON_FROM_KEY).compareTo(user) != 0) {
                                 Message msg = getMessage(obj);
                                 dao.create(msg);
-                                MainFragment.getInstance().refreshAdapter();
-                                //} else {
-                                //    Log.d(TAG, "Message from current user");
-                                //}
+                                listener.onReceiveMessage(msg);
+                                //MainFragment.getInstance().refreshAdapter();
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             } catch (SQLException e) {
@@ -429,7 +424,10 @@ public class RainbowHelper {
                 }
 
                 // download attachment
-                if (message.getType() == Message.IMAGE_MESSAGE || msg_decrypted.matches("^(http|https)(://).+(.png|.jpeg|.jpg)(/)*$")) {
+                if (
+                    message.getType() == Message.IMAGE_MESSAGE ||
+                        msg_decrypted.matches("^(http|https)(://).+(.png|.jpeg|.jpg)(/)*$")
+                    ) {
                     Log.d(TAG, "download attachment");
                     downloadAttachment(message);
                 }

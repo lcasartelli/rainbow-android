@@ -53,7 +53,7 @@ public class GalleryHelper {
 
     private GalleryHelper(MainActivity activity) {
         this.context = activity;
-        this.animationDuration = context.getResources().getInteger(android.R.integer.config_mediumAnimTime);
+        this.animationDuration = this.context.getResources().getInteger(android.R.integer.config_mediumAnimTime);
     }
 
     public static synchronized GalleryHelper getInstance(MainActivity activity) {

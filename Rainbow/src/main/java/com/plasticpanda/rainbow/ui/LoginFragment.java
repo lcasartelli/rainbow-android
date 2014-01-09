@@ -91,7 +91,6 @@ public class LoginFragment extends Fragment {
                                             .beginTransaction()
                                             .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                                             .replace(R.id.container, MainFragment.getInstance())
-                                                //.addToBackStack(null)
                                             .commit();
                                     }
                                 }

@@ -17,7 +17,6 @@
 
 package com.plasticpanda.rainbow.core;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -46,14 +45,14 @@ public class ImagesHelper {
 
 
     private SharedPreferences sharedPreferences;
-    private Activity context;
+    private Context context;
 
     // Cache
     private WebImageCache imgCache;
     private int cacheSize;
 
 
-    public ImagesHelper(Activity context) {
+    public ImagesHelper(Context context) {
         this.context = context;
         this.sharedPreferences = this.context.getSharedPreferences(RainbowConst.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
         // init cache
@@ -73,7 +72,7 @@ public class ImagesHelper {
     }
 
 
-    public static synchronized ImagesHelper getInstance(Activity context) {
+    public static synchronized ImagesHelper getInstance(Context context) {
         if (sharedInstance == null) {
             sharedInstance = new ImagesHelper(context);
         }
@@ -120,12 +119,7 @@ public class ImagesHelper {
                     }
                 }
                 final Bitmap finalBmp = bmp;
-                context.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        imageListener.onSuccess(finalBmp);
-                    }
-                });
+                imageListener.onSuccess(finalBmp);
             }
         }).start();
     }

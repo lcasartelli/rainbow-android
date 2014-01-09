@@ -25,11 +25,25 @@ import com.testflightapp.lib.TestFlight;
 
 public class RainbowApp extends Application {
 
+    private static boolean isActivityVisible;
+
     @Override
     public void onCreate() {
         super.onCreate();
         TestFlight.takeOff(this, getString(R.string.testflight_token));
 
         DatabaseHelper.getInstance(this.getApplicationContext());
+    }
+
+    public static boolean isActivityVisible() {
+        return isActivityVisible;
+    }
+
+    public static void activityResumed() {
+        isActivityVisible = true;
+    }
+
+    public static void activityPaused() {
+        isActivityVisible = false;
     }
 }

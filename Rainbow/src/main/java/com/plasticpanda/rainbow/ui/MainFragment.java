@@ -63,8 +63,6 @@ public class MainFragment extends ListFragment {
 
     public MainFragment() {
         super();
-        this.context = (MainActivity) getActivity();
-        this.galleryHelper = GalleryHelper.getInstance(this.context);
     }
 
     public static synchronized MainFragment getInstance() {
@@ -78,6 +76,9 @@ public class MainFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+        this.context = (MainActivity) getActivity();
+        this.galleryHelper = GalleryHelper.getInstance(this.context);
 
         if (this.context != null) {
             this.mAdapter = new ChatAdapter(this.context, messages);
@@ -110,6 +111,7 @@ public class MainFragment extends ListFragment {
                 galleryHelper.popImageView();
             }
         });
+
 
         return rootView;
     }
@@ -337,16 +339,21 @@ public class MainFragment extends ListFragment {
                 ImagesHelper imgHelper = ImagesHelper.getInstance(context);
                 imgHelper.retrieveImageThumb(message, new ImageListener() {
                     @Override
-                    public void onSuccess(Bitmap b) {
-                        imageView.setImageBitmap(b);
-                        imageView.setOnClickListener(new View.OnClickListener() {
+                    public void onSuccess(final Bitmap b) {
+                        context.runOnUiThread(new Runnable() {
                             @Override
-                            public void onClick(View view) {
+                            public void run() {
+                                imageView.setImageBitmap(b);
+                                imageView.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
 
-                                ImageFragment frag = new ImageFragment(context);
-                                frag.setMessage(message);
+                                        ImageFragment frag = new ImageFragment(context);
+                                        frag.setMessage(message);
 
-                                galleryHelper.pushImageView(imageView, message);
+                                        galleryHelper.pushImageView(imageView, message);
+                                    }
+                                });
                             }
                         });
                     }
