@@ -26,6 +26,9 @@ import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
@@ -77,12 +80,16 @@ public class RainbowService extends Service {
             messageText = SecurityUtils.decrypt(messageText);
         }
 
+        Uri notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
         NotificationCompat.Builder mBuilder =
             new NotificationCompat.Builder(this)
                 .setContentTitle(message.getAuthor())
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.notification))
                 .setSmallIcon(R.drawable.notification)
-                .setContentText(messageText);
+                .setContentText(messageText)
+                .setLights(Color.BLUE, 300, 1000)
+                .setSound(notificationSound);
 
         Intent resultIntent = new Intent(this, MainActivity.class);
         resultIntent.setAction(Intent.ACTION_MAIN);

@@ -17,9 +17,7 @@
 
 package com.plasticpanda.rainbow.utils;
 
-/**
- * Created by lcasartelli on 1/7/14.
- */
+
 public interface BackListener {
 
     public void goBack();
