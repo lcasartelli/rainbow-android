@@ -18,6 +18,7 @@
 package com.plasticpanda.rainbow.core;
 
 import android.app.Application;
+import android.content.Intent;
 
 import com.plasticpanda.rainbow.R;
 import com.plasticpanda.rainbow.db.DatabaseHelper;
@@ -33,6 +34,7 @@ public class RainbowApp extends Application {
         TestFlight.takeOff(this, getString(R.string.testflight_token));
 
         DatabaseHelper.getInstance(this.getApplicationContext());
+        startService(new Intent(this, RainbowService.class));
     }
 
     public static boolean isActivityVisible() {

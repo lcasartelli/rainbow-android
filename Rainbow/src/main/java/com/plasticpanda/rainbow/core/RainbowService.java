@@ -18,20 +18,24 @@
 package com.plasticpanda.rainbow.core;
 
 import android.annotation.TargetApi;
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.plasticpanda.rainbow.R;
 import com.plasticpanda.rainbow.db.Message;
-import com.plasticpanda.rainbow.ui.MainFragment;
 import com.plasticpanda.rainbow.utils.PNListener;
+import com.plasticpanda.rainbow.utils.SecurityUtils;
 
 
 public class RainbowService extends Service {
@@ -51,11 +55,14 @@ public class RainbowService extends Service {
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        RainbowHelper.getInstance(this.getApplicationContext()).pubNub(new PNListener() {
+        RainbowHelper rainbowHelper = RainbowHelper.getInstance(this.getApplicationContext());
+
+        rainbowHelper.pubNub(new PNListener() {
             @Override
             public void onReceiveMessage(Message message) {
+
                 if (RainbowApp.isActivityVisible()) {
-                    MainFragment.getInstance().refreshAdapter();
+                    LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(new Intent("new-message"));
                 } else {
                     emitNotification(message);
                 }
@@ -65,11 +72,17 @@ public class RainbowService extends Service {
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void emitNotification(Message message) {
+        String messageText = message.getMessage();
+        if (message.isEncrypted()) {
+            messageText = SecurityUtils.decrypt(messageText);
+        }
+
         NotificationCompat.Builder mBuilder =
             new NotificationCompat.Builder(this)
                 .setContentTitle(message.getAuthor())
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.notification))
                 .setSmallIcon(R.drawable.notification)
-                .setContentText("Hello! :)");
+                .setContentText(messageText);
 
         Intent resultIntent = new Intent(this, MainActivity.class);
         resultIntent.setAction(Intent.ACTION_MAIN);
@@ -85,7 +98,22 @@ public class RainbowService extends Service {
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
+        return START_REDELIVER_INTENT;
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        if (getApplicationContext() != null) {
+            Intent restartServiceIntent = new Intent(getApplicationContext(), this.getClass());
+            PendingIntent restartServicePendingIntent = PendingIntent.getService(getApplicationContext(), 1, restartServiceIntent, PendingIntent.FLAG_ONE_SHOT);
+            AlarmManager alarmService = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+            alarmService.set(
+                AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + 1000,
+                restartServicePendingIntent);
+        }
+        super.onTaskRemoved(rootIntent);
     }
 }

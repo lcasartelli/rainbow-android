@@ -21,7 +21,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
@@ -63,8 +62,6 @@ public class MainActivity extends Activity {
                 .add(R.id.container, fragment)
                 .commit();
         }
-
-        startService(new Intent(this, RainbowService.class));
     }
 
     @Override

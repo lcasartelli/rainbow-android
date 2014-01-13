@@ -18,9 +18,13 @@
 package com.plasticpanda.rainbow.ui;
 
 import android.app.ListFragment;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -112,6 +116,7 @@ public class MainFragment extends ListFragment {
             }
         });
 
+        LocalBroadcastManager.getInstance(this.context).registerReceiver(this.broadcastReceiver, new IntentFilter("new-message"));
 
         return rootView;
     }
@@ -237,6 +242,13 @@ public class MainFragment extends ListFragment {
             }
         }).start();
     }
+
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            refreshAdapter();
+        }
+    };
 
 
     class ChatAdapter extends BaseAdapter {
